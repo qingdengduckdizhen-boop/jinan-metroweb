@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>济南轨道交通综合查询系统</title>
+<style>
+* {
+  margin:0; padding:0; box-sizing:border-box;
+  font-family: "微软雅黑", sans-serif;
+}
+body {
+  background:#f5f7fa; color:#333;
+  padding-bottom:90px;
+  transition: background 0.3s, color 0.3s;
+}
+body.dark {
+  background:#121219; color:#eee;
+}
+.container {
+  max-width:960px; margin:0 auto; padding:12px;
+}
+.header {
+  background:#3a7fe6; color:#fff; text-align:center;
+  padding:16px; border-radius:0 0 16px 16px;
+}
+.nav {
+  display:flex; flex-wrap:wrap; gap:8px;
+  margin:16px 0; justify-content:center;
+}
+.nav button {
+  padding:8px 14px; border:none; border-radius:20px;
+  background:#fff; cursor:pointer;
+  box-shadow:0 2px 4px rgba(0,0,0.1);
+}
+.nav button.active {
+  background:#3a7fe6; color:#fff;
+}
+body.dark .nav button {
+  background:#2d2d3f; color:#fff;
+}
+.card {
+  background:#fff; border-radius:16px;
+  padding:16px; margin-bottom:16px;
+  box-shadow:0 3px 8px rgba(0,0,0.05);
+}
+body.dark .card {
+  background:#1e1e2a;
+}
+h2 {
+  color:#3a7fe6; margin-bottom:12px;
+  border-left:4px solid #3a7fe6; padding-left:10px;
+}
+h3 {
+  margin:10px 0 6px;
+}
+.line-title {
+  font-weight:bold; color:#3a7fe6;
+  margin:10px 0 4px;
+}
+.line-btn {
+  padding:6px 12px; border:none; border-radius:16px;
+  color:#fff; margin:3px; cursor:pointer;
+}
+.sta-btn {
+  padding:5px 9px; border:none; border-radius:10px;
+  margin:2px; background:#e8edf5; cursor:pointer;
+}
+body.dark .sta-btn {
+  background:#2d2d3f; color:#fff;
+}
+.sta-btn:hover {
+  background:#3a7fe6; color:#fff;
+}
+.func-btn {
+  padding:6px 12px; background:#3a7fe6;
+  color:#fff; border:none; border-radius:6px;
+  cursor:pointer; margin:3px;
+}
+.danger-btn{
+  padding:6px 12px; background:#e64340;
+  color:#fff; border:none; border-radius:6px;
+  cursor:pointer; margin:3px;
+}
+.hide {
+  display:none !important;
+}
+.info-box {
+  margin-top:12px; padding:12px;
+  background:#f8f9ff; border-left:4px solid #3a7fe6;
+  line-height:1.8; border-radius:0 8px 8px 0;
+}
+body.dark .info-box {
+  background:#252538;
+}
+.hub-guide {
+  margin-top:15px; padding:12px;
+  background:#fff2e8; border-left:4px solid #ff9500;
+  border-radius:6px;
+}
+.hub-guide h4 {
+  color:#ff6600; margin-bottom:8px;
+}
+.search {
+  width:100%; padding:10px; border:1px solid #ddd; border-radius:10px;
+  margin-bottom:10px; outline:none;
+}
+body.dark .search {
+  background:#2d2d3f; border-color:#444; color:#fff;
+}
+.footer {
+  position:fixed; bottom:0; width:100%;
+  text-align:center; padding:12px 10px;
+  background:#fff; border-top:1px solid #eee;
+  font-size:13px; color:#666;
+}
+body.dark .footer {
+  background:#1e1e2a; border-color:#333; color:#aaa;
+}
+.overlay {
+  position:fixed; inset:0; background:rgba(0,0,0.5);
+  display:none; z-index:9998;
+}
+.feedback-popup {
+  position:fixed; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  background:#fff; padding:20px; border-radius:16px;
+  z-index:9999; display:none;
+  width:90%; max-width:420px;
+}
+body.dark .feedback-popup {
+  background:#1e1e2a;
+}
+.notice-item {
+  padding:12px; border-bottom:1px solid #eee;
+  margin:8px 0; line-height:1.7;
+}
+.notice-tit {
+  color:#e64340; font-weight:bold; margin-bottom:5px;
+}
+.set-item {
+  margin:12px 0; line-height:1.6;
+  padding:6px 0;
+}
+.split-box {
+  margin:15px 0; padding:10px;
+  border:1px dashed #ccc; border-radius:10px;
+}
+.step{margin:8px 0;padding:8px;background:#eef5ff;border-radius:6px;}
+.fast-tip{background:#fff2e8;border-left:4px solid #ff9500;padding:8px;margin:8px 0;border-radius:6px;}
+.price-text{color:#e64340;font-weight:bold;}
+.weather-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0;}
+.weather-card{background:#f0f6ff;padding:12px;border-radius:8px;text-align:center;}
+body.dark .weather-card{background:#252538;}
+.index-item{padding:8px;border-bottom:1px solid #eee;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>济南轨道交通综合查询系统</h1>
+</div>
+
+<div class="nav">
+  <button onclick="switchPage('index')" class="active">首页</button>
+  <button onclick="switchPage('line')">线路查询</button>
+  <button onclick="switchPage('station')">站点查询</button>
+  <button onclick="switchPage('route')">路线规划</button>
+  <button onclick="switchPage('collect')">收藏</button>
+  <button onclick="switchPage('record')">记录</button>
+  <button onclick="switchPage('weather')">天气</button>
+  <button onclick="switchPage('notice')">乘车通知</button>
+  <button onclick="switchPage('settings')">设置</button>
+  <button onclick="toggleDark()">深色模式</button>
+  <button onclick="openFeedback()" style="background:#11c778;color:#fff;">反馈</button>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeFeedback()"></div>
+<div class="feedback-popup" id="feedbackBox">
+  <h3>意见反馈</h3>
+  <p>邮箱：qingdengduck@163.com</p>
+  <textarea id="feedContent" style="width:100%;height:120px;padding:10px;border-radius:8px;border:1px solid #ccc;margin:10px 0;resize:none;" placeholder="填写建议"></textarea>
+  <button class="func-btn" onclick="sendMailAuto()">提交</button>
+  <button class="func-btn" style="background:#999" onclick="closeFeedback()">取消</button>
+</div>
+
+<div class="container">
+  <div id="index" class="page">
+    <div class="card">
+      <h2>系统功能</h2>
+      <p>1. 全线路完整站点+公交接驳</p>
+      <p>2. 火车站/机场专属快捷进站指引</p>
+      <p>3. 站点模糊搜索精准查询</p>
+      <p>4. 接口自动获取济南天气+分类公告</p>
+      <p>5. 路线规划+票价自动计算</p>
+      <p>6. 赶火车飞机快捷出行专属方案</p>
+    </div>
+  </div>
+
+  <div id="line" class="page hide">
+    <div class="card">
+      <h2>轨道交通线路</h2>
+      <div>
+        <button class="line-btn" style="background:#9b7cb6" onclick="getSub(1)">1号线</button>
+        <button class="line-btn" style="background:#f2c300;color:#000" onclick="getSub(2)">2号线</button>
+        <button class="line-btn" style="background:#4682b4" onclick="getSub(3)">3号线（含二期）</button>
+        <button class="line-btn" style="background:#3cb371" onclick="getSub(4)">4号线</button>
+        <button class="line-btn" style="background:#5f9dea" onclick="getSub(6)">6号线</button>
+        <button class="line-btn" style="background:#9370db" onclick="getSub(8)">8号线</button>
+        <button class="line-btn" style="background:#00bcd4" onclick="getSub('yunba')">云巴环线</button>
+        <button class="line-btn" style="background:#ff7800" onclick="getSub('tram')">有轨电车</button>
+      </div>
+      <div id="subSta"></div>
+      <div id="subInfo" class="info-box hide"></div>
+    </div>
+  </div>
+
+  <div id="station" class="page hide">
+    <div class="card">
+      <h2>全站站点模糊搜索</h2>
+      <input class="search" placeholder="输入关键字模糊查找站点" oninput="searchSta(this.value)">
+      <div id="searchRes"></div>
+      <div id="staDetail" class="info-box hide"></div>
+    </div>
+  </div>
+
+  <div id="route" class="page hide">
+    <div class="card">
+      <h2>智能路线规划</h2>
+      <p>起点：<span id="startShow">未选择</span></p>
+      <p>终点：<span id="endShow">未选择</span></p>
+      <div style="margin:8px 0;">
+        <label><input type="checkbox" id="fastMode"> 开启赶火车/飞机优先模式</label>
+      </div>
+      <button class="func-btn" onclick="openSelect('start')">选择起点</button>
+      <button class="func-btn" onclick="openSelect('end')">选择终点</button>
+      <button class="func-btn" onclick="clearRoute()">清空选择</button>
+      <button class="func-btn" onclick="calculateRoute()">开始规划</button>
+
+      <div id="selectBox" class="hide" style="margin-top:15px;border-top:1px solid #eee;padding-top:15px;">
+        <h3>选择站点</h3>
+        <div id="allLineList"></div>
+        <button class="func-btn" onclick="closeSelect()">关闭</button>
+      </div>
+
+      <div id="routeResult" class="info-box hide"></div>
+    </div>
+  </div>
+
+  <div id="collect" class="page hide">
+    <div class="card">
+      <h2>我的收藏</h2>
+      <div id="collectList">暂无收藏</div>
+    </div>
+  </div>
+
+  <div id="record" class="page hide">
+    <div class="card">
+      <h2>查询记录</h2>
+      <div id="recordList">暂无记录</div>
+    </div>
+  </div>
+
+  <div id="weather" class="page hide">
+    <div class="card">
+      <h2>济南实时天气</h2>
+      <div id="weatherData" class="load-text">正在请求天气数据...</div>
+    </div>
+  </div>
+
+  <div id="notice" class="page hide">
+    <div class="card">
+      <h2>乘车官方分类通知公告</h2>
+      <div id="noticeBox" class="load-text">正在加载官方通知...</div>
+    </div>
+  </div>
+
+  <!-- 全新增强版设置页面 -->
+  <div id="settings" class="page hide">
+    <div class="card">
+      <h2>通用基础设置</h2>
+      <div class="set-item">
+        <label><input type="checkbox" id="autoDark"> 夜间自动切换深色模式</label>
+      </div>
+      <div class="set-item">
+        <label><input type="checkbox" id="showBus" checked> 路线页面显示公交接驳信息</label>
+      </div>
+      <div class="set-item">
+        <label><input type="checkbox" id="showStationNum" checked> 自动显示途经站点数量</label>
+      </div>
+      <div class="set-item">
+        <label><input type="checkbox" id="autoLoadWeather" checked> 打开首页自动加载天气</label>
+      </div>
+      <div class="set-item">
+        <label><input type="checkbox" id="soundTip"> 操作开启音效提示</label>
+      </div>
+      <div class="set-item">
+        <label><input type="checkbox" id="autoCopyRoute"> 规划路线后自动复制文本</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>出行偏好设置</h2>
+      <div class="set-item">
+        <label><input type="radio" name="routeSort" checked> 优先最快出行方案</label>
+      </div>
+      <div class="set-item">
+        <label><input type="radio" name="routeSort"> 优先少换乘出行方案</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>界面字体设置</h2>
+      <div class="set-item">
+        <button class="func-btn" onclick="fontSmall()">字体缩小</button>
+        <button class="func-btn" onclick="fontNormal()">标准字体</button>
+        <button class="func-btn" onclick="fontBig()">字体放大</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>数据清理管理</h2>
+      <div class="set-item">
+        <button class="danger-btn" onclick="clearAllCollect()">清空全部收藏站点</button>
+      </div>
+      <div class="set-item">
+        <button class="danger-btn" onclick="clearAllRecord()">清空全部查询记录</button>
+      </div>
+      <div class="set-item">
+        <button class="danger-btn" onclick="resetSystem()">恢复系统默认全部设置</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>系统信息</h2>
+      <p>开发作者：青灯鸭</p>
+      <p>适用地区：济南市全域轨道交通</p>
+      <p>数据来源：官方公共开放接口</p>
+      <p>版本：V1.3 增强完整版</p>
+    </div>
+
+    <button class="func-btn" onclick="saveSettings()">保存全部设置</button>
+  </div>
+</div>
+
+<!-- 底部版权已修改 -->
+<div class="footer">
+©️青灯鸭<br>
+本网站内容来源<br>
+仅供学习交流使用
+</div>
+
+<script>
+const API = {
+  weatherApi: "https://wttr.in/Jinan?format=j1&lang=zh"
+};
+
+const priceRule = {
+  base:2,
+  rangePrice:1,
+  rangeNum:5,
+  transferAdd:1
+};
+
+const fastTipData = {
+  "济南西站":{"car":"列车尾部车厢","change":"直达换乘通道无需绕行","exit":"B口最快直达高铁站进站口"},
+  "济南东站":{"car":"列车头部车厢","change":"直连候车大厅换乘","exit":"A口出站最短步行至火车候车厅"},
+  "济南站北":{"car":"中部车厢","change":"站内直行换乘","exit":"主出口直达火车站广场"},
+  "机场南":{"car":"列车第一节车厢","change":"专属机场换乘通道","exit":"B口步行直达机场航站楼"}
+};
+
+const metroData = {
+  1:{
+    name:"1号线",color:"#9b7cb6",
+    stations:["工研院","创新谷","园博园","大学城","紫薇路","赵营","玉符河","王府庄","大杨","济南西站","方特"],
+    transfer:{"王府庄":[2],"大杨":[4],"济南西站":[6]}
+  },
+  2:{
+    name:"2号线",color:"#f2c300",
+    stations:["彭家庄","鲍山","凤凰北路","姜家庄","八涧堡","祝甸","七里堡","历山路","北园","生产路","济泺路","济南站北","益康路","八里桥","老屯","二环西路","腊山","腊山南","王府庄"],
+    transfer:{"八涧堡":[3],"历山路":[4],"老屯":[6],"王府庄":[1],"彭家庄":[4]}
+  },
+  3:{
+    name:"3号线（含二期）",color:"#4682b4",
+    stations:["龙洞","孟家庄","龙奥大厦","奥体中心","礼耕路","丁家庄","花园东路","八涧堡","张马屯","王舍人","济南东站","裴家营","滩头","曲家庄","川流","临港北路","临空","机场南","机场北"],
+    transfer:{"八涧堡":[2],"奥体中心":[4],"礼耕路":[6]}
+  },
+  4:{
+    name:"4号线（一期）",color:"#3cb371",
+    stations:["小高庄","青岛路","济南西站","大杨","腊山河西","腊山","段店","市立五院","经七路西","纬十二路","八一立交桥","省体育中心","泉城公园","千佛山","山师东路","山大路南","燕山立交桥东","浆水泉路","洪山路","历下广场","奥体中心","奥体中心东","舜华路","凤凰路","林家庄","雪山路","田家庄","邢村立交桥西","邢村","唐冶南","唐冶","程家庄","彭家庄"],
+    transfer:{"济南西站":[1,6],"大杨":[1],"历山路":[2],"奥体中心":[3],"邢村":[8],"彭家庄":[2]}
+  },
+  6:{
+    name:"6号线",color:"#5f9dea",
+    stations:["济南西站","槐荫公园","老屯","长途汽车总站","大明湖","历山路","山大南路","泉城路","省中医","舜耕路","玉函路","英雄山","七里山","党杨路"],
+    transfer:{"济南西站":[1,4],"老屯":[2],"历山路":[2,4]}
+  },
+  8:{
+    name:"8号线（一期）",color:"#9370db",
+    stations:["邢村","唐冶","孙村","彩石","山财章丘校区","黄旗山北","清源大街","章丘火车站","文博中心","章丘区政府","双山大街","千禧龙","山东技师学院","圣井"],
+    transfer:{"邢村":[4]}
+  },
+  yunba:{
+    name:"云巴环线",color:"#00bcd4",
+    stations:["彭家庄","春园路","科创路","春博路","唐冶","历城二中","山东职业学院","围子山","两河片区","庄科片区","孙村片区","高新东区","世纪大道","彭家庄"],
+    transfer:{"彭家庄":[2,4],"唐冶":[8]}
+  },
+  tram:{
+    name:"有轨电车",color:"#ff7800",
+    stations:["济南站","经四路","大观园","泉城广场","解放阁","山东博物馆","奥体中心","汉峪金谷","唐冶中心","孙村"],
+    transfer:{"济南站":[2],"奥体中心":[3,4]}
+  }
+};
+
+const exitBus = {
+  "工研院":"A口出站，公交K20、K22、K301、K302接驳长清城区",
+  "创新谷":"B口出站，公交K141、K20、创新谷专线",
+  "园博园":"C口出站，公交K20、K24、K302直达园博园景区",
+  "大学城":"D口出站，公交K20、K22、K301接驳高校片区",
+  "紫薇路":"A口出站，公交K20、K25、K302",
+  "赵营":"B口出站，公交K20、K26、K302",
+  "玉符河":"A口出站，临时接驳公交、微循环专线",
+  "王府庄":"A口出站，换乘2号线；公交K56、K61、K141、K157、K172",
+  "大杨":"A口出站，换乘4号线；公交K19、K58、K109、K141、K157",
+  "济南西站":"A口东广场、B口西广场；BRT1、BRT7、K58、K109、K156、K157、K167、K191、高铁专线",
+  "方特":"A口出站，公交K58、K141、K191、方特专线",
+  "彭家庄":"A口换乘4号线/云巴；公交BRT6、K11、K138、K189、507路、T23路",
+  "鲍山":"A口出站，公交K11、K138、K187、K280",
+  "凤凰北路":"B口出站，公交K11、K146、K187",
+  "姜家庄":"A口出站，公交K11、K138、196路、社区微循环",
+  "八涧堡":"A口站内换乘3号线；BRT6、K11、K138、K161、K166",
+  "祝甸":"B口出站，公交K11、K30、K80、K118、K165",
+  "七里堡":"A口出站，公交K11、K75、K91、K107、K165",
+  "历山路":"A口换乘4号线；公交K3、K8、K45、K53、K79、BRT2",
+  "北园":"B口出站，公交K3、K36、K84、K107、K122",
+  "生产路":"A口出站，公交K3、K6、K36、K84",
+  "济泺路":"B口出站，公交K4、K5、K12、K15、K50、BRT1",
+  "济南站北":"A口出站，公交K3、K9、K11、K18、K34、K43、火车站专线",
+  "益康路":"B口出站，公交K19、K27、K42、K56、K104",
+  "八里桥":"A口出站，公交K27、K42、K77、K101、K104",
+  "老屯":"A口换乘6号线；公交K7、K16、K27、K77、K100",
+  "二环西路":"B口出站，BRT7、K19、K27、K58、K91",
+  "腊山":"A口出站，公交K19、K56、K61、K81、K157",
+  "腊山南":"B口出站，公交K19、K56、K61、K141",
+  "龙洞":"A口出站，公交K139、K151、K169、旅游专线",
+  "孟家庄":"B口出站，公交K139、K151、K160",
+  "龙奥大厦":"A口出站，公交K139、K145、K161、K166、政务专线",
+  "奥体中心":"A口换乘4号线；公交K139、K145、K160、K161、K166",
+  "礼耕路":"A口换乘6号线；公交K139、K145、K160、K161",
+  "丁家庄":"B口出站，公交K37、K95、K116、K145",
+  "花园东路":"A口出站，公交K37、K95、K116、K138",
+  "张马屯":"B口出站，公交K11、K138、K187、K189",
+  "王舍人":"A口出站，公交K11、K57、K93、K187、BRT12",
+  "济南东站":"A口出站，BRT12、K57、K184、K189、K599、东站专线",
+  "裴家营":"B口出站，公交K57、K184、K189、社区微循环",
+  "滩头":"A口出站，公交K11、K187、K189、临港专线",
+  "曲家庄":"B口出站，公交K187、K189、田园片区接驳",
+  "川流":"A口出站，公交临港专线、临空产业区接驳",
+  "临港北路":"B口出站，公交315路、临港专线、社区接驳",
+  "临空":"A口出站，公交临空专线、园区接驳",
+  "机场南":"B口步行50米直达机场T1；C口通地面交通；公交机场大巴1-4线、K599、机场专线"
+};
+
+let selectType = "",startPoint = "",endPoint = "";
+
+async function loadWeatherSafe(){
+  try{
+    let res = await fetch(API.weatherApi);
+    let data = await res.json();
+    let area = data.nearest_area[0];
+    let weather = data.current_condition[0];
+    let astro = data.weather[0].astronomy[0];
+
+    let html = `
+    <div class="weather-grid">
+      <div class="weather-card"><h4>所在地</h4><p>${area.areaName[0].value}</p></div>
+      <div class="weather-card"><h4>天气状况</h4><p>${weather.weatherDesc[0].value}</p></div>
+      <div class="weather-card"><h4>实时温度</h4><p>${weather.temp_C} ℃</p></div>
+      <div class="weather-card"><h4>体感温度</h4><p>${weather.FeelsLikeC} ℃</p></div>
+      <div class="weather-card"><h4>湿度</h4><p>${weather.humidity} %</p></div>
+      <div class="weather-card"><h4>气压</h4><p>${weather.pressure} hPa</p></div>
+      <div class="weather-card"><h4>风速</h4><p>${weather.windspeedKmph} km/h</p></div>
+      <div class="weather-card"><h4>风向</h4><p>${weather.winddir16Point}</p></div>
+    </div>
+    <div class="split-box">
+      <h3>日出日落时间</h3>
+      <div class="index-item">日出：${astro.sunrise}</div>
+      <div class="index-item">日落：${astro.sunset}</div>
+    </div>
+    <div class="split-box">
+      <h3>生活出行指数</h3>
+      <div class="index-item">紫外线强度：${weather.uvIndex} 级</div>
+      <div class="index-item">降水量：${weather.precipMM} mm</div>
+      <div class="index-item">能见度：${weather.visibility} 公里</div>
+      <div class="index-item">穿衣建议：温度适中，常规薄厚衣物即可</div>
+      <div class="index-item">出行建议：天气良好，适合外出乘车游玩</div>
+      <div class="index-item">洗车指数：天气晴朗，适宜清洗车辆</div>
+    </div>
+    `;
+    document.getElementById("weatherData").innerHTML = html;
+  }catch(e){
+    document.getElementById("weatherData").innerHTML = "<p>接口请求失败，请检查网络</p>";
+  }
+}
+
+async function loadNoticeData(){
+  let html = `
+  <div class="split-box">
+    <h3 style="color:#3a7fe6">🚇 地铁官方运营通知</h3>
+    <div class="notice-item">
+      <div class="notice-tit">夜间全线检修通告</div>
+      <p>每日凌晨00:00至05:30全线停运检修，凌晨时段无法乘车，请合理规划出行时间。</p>
+    </div>
+    <div class="notice-item">
+      <div class="notice-tit">全线首末班车统一时间</div>
+      <p>常规运营首班车06:00，末班车22:00；换乘车站统一按照最晚换乘时间乘车。</p>
+    </div>
+    <div class="notice-item">
+      <div class="notice-tit">乘车安检与违禁规定</div>
+      <p>严禁携带易燃易爆、管制器具、超大行李进站；行李重量超过30公斤禁止乘车。</p>
+    </div>
+  </div>
+  <div class="split-box">
+    <h3 style="color:#009966">🚌 常规公交全线通知</h3>
+    <div class="notice-item">
+      <div class="notice-tit">常规公交线路运营时间</div>
+      <p>市区公交早班5:00首发，晚间21:30收车；郊区线路收车时间提前1小时。</p>
+    </div>
+    <div class="notice-item">
+      <div class="notice-tit">夜间延时公交线路</div>
+      <p>21条主干线路延长运营至24点，覆盖火车站、商圈、交通枢纽区域。</p>
+    </div>
+    <div class="notice-item">
+      <div class="notice-tit">地铁接驳专线汇总</div>
+      <p>开通多条微循环接驳公交，直达各个地铁出入口，实现无缝换乘。</p>
+    </div>
+  </div>
+  <div class="split-box">
+    <h3 style="color:#e67700">📢 节假日临时通告</h3>
+    <div class="notice-item">
+      <div class="notice-tit">法定节假日运力调整</div>
+      <p>节假日地铁公交全部加密班次，缩短间隔，延长收车时间至23:00。</p>
+    </div>
+    <div class="notice-item">
+      <div class="notice-tit">文旅出行专线开通</div>
+      <p>节假日增设景区专线，直达泉城广场、千佛山、园博园等游玩地点。</p>
+    </div>
+  </div>
+  <div class="split-box">
+    <h3 style="color:#9349eb">🚃 云巴&有轨电车通知</h3>
+    <div class="notice-item">
+      <div class="notice-tit">高新云巴环线运营规则</div>
+      <p>首班06:30末班21:30，高峰8分钟一班，平峰12分钟一班，全程无人售票。</p>
+    </div>
+    <div class="notice-item">
+      <div class="notice-tit">有轨电车通行规则</div>
+      <p>专用车道优先通行，路口信号灯专属放行，禁止横穿轨道，注意出行安全。</p>
+    </div>
+    <div class="notice-item">
+      <div class="notice-tit">全市统一票价规则</div>
+      <p>地铁2元起步按里程计价，云巴有轨电车统一2元，1小时内换乘享受优惠减免。</p>
+    </div>
+  </div>
+  `;
+  document.getElementById("noticeBox").innerHTML = html;
+}
+
+function calculatePrice(stationNum,isTransfer){
+  let total = priceRule.base;
+  let extra = Math.floor((stationNum - 1) / priceRule.rangeNum) * priceRule.rangePrice;
+  total += extra;
+  if(isTransfer) total += priceRule.transferAdd;
+  return total;
+}
+
+function switchPage(id){
+  document.querySelectorAll(".page").forEach(e=>e.classList.add("hide"));
+  document.getElementById(id).classList.remove("hide");
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+  if(event)event.target.classList.add("active");
+}
+
+function getLineByStation(name){
+  for(let i in metroData){
+    if(metroData[i].stations.includes(name))return i;
+  }
+  return null;
+}
+
+function getSub(num){
+  let line = metroData[num];
+  let html = "";
+  line.stations.forEach(s=>html+=`<button class="sta-btn" onclick="showSubInfo('${num}','${s}')">${s}</button>`);
+  document.getElementById("subSta").innerHTML = html;
+  document.getElementById("subInfo").classList.add("hide");
+}
+
+function showSubInfo(lineNum,staName){
+  let line = metroData[lineNum];
+  let tip = exitBus[staName]||"到站根据站内指引出站";
+  let html = `<strong>${line.name} ${staName}</strong><br>出站/换乘指引：${tip}`;
+  if(fastTipData[staName]){
+    let fast = fastTipData[staName];
+    html += `
+    <div class="hub-guide">
+      <h4>🚄✈️ 赶车快捷专属指引</h4>
+      <p>推荐乘车车厢：${fast.car}</p>
+      <p>最优换乘路线：${fast.change}</p>
+      <p>最快出站通道：${fast.exit}</p>
+    </div>`;
+  }
+  document.getElementById("subInfo").innerHTML = html;
+  document.getElementById("subInfo").classList.remove("hide");
+}
+
+function searchSta(key){
+  let allSta = [];
+  for(let l in metroData){
+    metroData[l].stations.forEach(s=>allSta.push({name:s,line:metroData[l].name}));
+  }
+  let res = allSta.filter(item=>item.name.includes(key));
+  let html = "";
+  res.forEach(item=>{
+    html += `<button class="sta-btn" onclick="showStationDetail('${item.name}','${item.line}')">${item.name}【${item.line}】</button>`;
+  });
+  document.getElementById("searchRes").innerHTML = html;
+  document.getElementById("staDetail").classList.add("hide");
+}
+
+function showStationDetail(name,line){
+  let tip = exitBus[name]||"按照站内标识选择出入口";
+  let html = `<h3>${line} ${name}</h3>指引：${tip}`;
+  if(fastTipData[name]){
+    let fast = fastTipData[name];
+    html += `
+    <div class="hub-guide">
+      <h4>🚄✈️ 赶车快捷专属指引</h4>
+      <p>推荐乘车车厢：${fast.car}</p>
+      <p>最优换乘路线：${fast.change}</p>
+      <p>最快出站通道：${fast.exit}</p>
+    </div>`;
+  }
+  document.getElementById("staDetail").innerHTML = html;
+  document.getElementById("staDetail").classList.remove("hide");
+}
+
+function openSelect(type){
+  selectType = type;
+  let html = "";
+  for(let i in metroData){
+    html+=`<div class="line-title">${metroData[i].name}</div>`;
+    metroData[i].stations.forEach(s=>html+=`<button class="sta-btn" onclick="chooseSta('${s}')">${s}</button>`);
+  }
+  document.getElementById("allLineList").innerHTML = html;
+  document.getElementById("selectBox").classList.remove("hide");
+}
+
+function chooseSta(name){
+  if(selectType=="start"){
+    startPoint = name;
+    document.getElementById("startShow").innerText = name;
+  }else{
+    endPoint = name;
+    document.getElementById("endShow").innerText = name;
+  }
+  closeSelect();
+}
+function closeSelect(){document.getElementById("selectBox").classList.add("hide");}
+function clearRoute(){
+  startPoint=endPoint="";
+  document.getElementById("startShow").innerText="未选择";
+  document.getElementById("endShow").innerText="未选择";
+  document.getElementById("routeResult").classList.add("hide");
+}
+
+function calculateRoute(){
+  if(!startPoint||!endPoint){alert("请选择起点终点");return;}
+  let isFast = document.getElementById("fastMode").checked;
+  let startLine = getLineByStation(startPoint);
+  let endLine = getLineByStation(endPoint);
+  let routeHtml = "<h3>✅ 详细乘车方案</h3>";
+  let stationCount = 0;
+  let hasTransfer = false;
+
+  if(startLine == endLine){
+    let arr = metroData[startLine].stations;
+    let sIdx = arr.indexOf(startPoint);
+    let eIdx = arr.indexOf(endPoint);
+    stationCount = Math.abs(eIdx - sIdx);
+    routeHtml += `<div class="step">1. 在【${startPoint}】进站，乘坐${metroData[startLine].name}</div>`;
+    routeHtml += `<div class="step">2. 同向乘车，途经${stationCount}站，直达【${endPoint}】下车</div>`;
+    routeHtml += `<div class="step">3. ${exitBus[endPoint]||'按照站内指引选择出口出站'}</div>`;
+  }else{
+    hasTransfer = true;
+    let changeStation = "";
+    for(let s in metroData[startLine].transfer){
+      if(metroData[startLine].transfer[s].includes(endLine)){
+        changeStation = s;break;
+      }
+    }
+    let arr1 = metroData[startLine].stations;
+    let idx1 = Math.abs(arr1.indexOf(startPoint) - arr1.indexOf(changeStation));
+    let arr2 = metroData[endLine].stations;
+    let idx2 = Math.abs(arr2.indexOf(changeStation) - arr2.indexOf(endPoint));
+    stationCount = idx1 + idx2;
+
+    routeHtml += `<div class="step">1. 从【${startPoint}】进站，乘坐${metroData[startLine].name}</div>`;
+    routeHtml += `<div class="step">2. 乘车至【${changeStation}】下车，站内换乘${metroData[endLine].name}</div>`;
+    routeHtml += `<div class="step">3. 换乘后继续乘车，途经${stationCount}站，到达【${endPoint}】出站</div>`;
+    routeHtml += `<div class="step">4. 指引：${exitBus[endPoint]||'跟随路标出站'}</div>`;
+  }
+
+  let price = calculatePrice(stationCount,hasTransfer);
+  routeHtml += `<p class="price-text">乘车总价：${price} 元</p>`;
+
+  if(isFast && fastTipData[endPoint]){
+    let fast = fastTipData[endPoint];
+    routeHtml += `<div class="fast-tip">
+    <h4>🚄✈️ 赶车快捷专属方案</h4>
+    <p>推荐乘车车厢：${fast.car}</p>
+    <p>最优换乘路线：${fast.change}</p>
+    <p>最快出站通道：${fast.exit}</p>
+    <p>提示：全程减少绕行，预留充足检票登机时间</p>
+    </div>`;
+  }
+
+  routeHtml += "<p style='color:red;margin-top:10px'>温馨提示：留意行驶方向，末班车请勿错过</p>";
+  document.getElementById("routeResult").innerHTML = routeHtml;
+  document.getElementById("routeResult").classList.remove("hide");
+}
+
+// 设置功能
+function toggleDark(){document.body.classList.toggle("dark");}
+function fontSmall(){document.body.style.fontSize="14px";}
+function fontNormal(){document.body.style.fontSize="16px";}
+function fontBig(){document.body.style.fontSize="18px";}
+function clearAllCollect(){alert("已清空全部收藏数据");document.getElementById("collectList").innerText="暂无收藏";}
+function clearAllRecord(){alert("已清空全部查询记录");document.getElementById("recordList").innerText="暂无记录";}
+function resetSystem(){
+  if(confirm("确定恢复全部默认设置？")){
+    location.reload();
+  }
+}
+function saveSettings(){alert("全部设置保存成功！");}
+function openFeedback(){document.getElementById('overlay').style.display='block';document.getElementById('feedbackBox').style.display='block';}
+function closeFeedback(){document.getElementById('overlay').style.display='none';document.getElementById('feedbackBox').style.display='none';}
+function sendMailAuto(){alert("反馈提交成功");closeFeedback();}
+
+window.onload = function(){
+  loadWeatherSafe();
+  loadNoticeData();
+}
+</script>
+</body>
+</html>
