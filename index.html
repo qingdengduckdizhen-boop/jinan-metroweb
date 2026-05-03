@@ -62,7 +62,7 @@ body.dark .header{
 }
 @keyframes navAnim{
   from{opacity:0;transform:translateY(10px);}
-  to{opacity:1;transform:translateY(10px);}
+  to{opacity:1;transform:translateY(0);}
 }
 .nav button {
   padding:9px 16px; border:none; border-radius:25px;
@@ -607,9 +607,7 @@ body.dark .weather-card{background:rgba(37,37,56,0.55);}
 <div class="footer">
 ©️青灯鸭 | 清水引擎 纯净轨道交通查询系统<br>
 不作恶 · 保隐私 · 无劫持 · 安全出行
-</div>
-
-<script>
+</div><script>
 const API = {weatherApi: "https://wttr.in/Jinan?format=j1&lang=zh"};
 const priceRule = {base:2,rangePrice:1,rangeNum:5,transferAdd:1};
 let nowCollectSta = "";
@@ -760,7 +758,7 @@ function switchPage(id){
   document.querySelectorAll(".page").forEach(e=>e.classList.add("hide"));
   document.getElementById(id).classList.remove("hide");
   document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
-  if(event)event.target.classList.add("active");
+  event.target.classList.add("active");
 }
 
 function longPressCollect(name){
@@ -810,4 +808,250 @@ function showSubInfo(lineNum,staName){
   }
   html += `</div>`;
   document.getElementById("subInfo").innerHTML = html;
-  document.getElementById("subInfo").classList.r
+  document.getElementById("subInfo").classList.remove("hide");
+}
+
+function showStationDetail(name,line){
+  let data = exitBus[name];
+  let html = `<h3>${name}</h3>
+  <div class="time-box">本站首末班车时间：首班06:00 末班22:00</div>
+  <div class="bus-box">出站${data.exit} 可前往周边公交站，接驳公交线路：${data.bus}</div>
+  <div class="other-box"><h4>其他功能</h4>`;
+  if(data.mall!="无") html += `<p>商业通行：${data.mall}</p>`;
+  if(data.scenic!="无") html += `<p>周边景区：${data.scenic}</p>`;
+  if(transferCarGuide[name]){
+    let car = transferCarGuide[name];
+    html += `<p>换乘指引：推荐${car.car}，${car.path}</p>`;
+  }
+  html += `</div>`;
+  document.getElementById("staDetail").innerHTML = html;
+  document.getElementById("staDetail").classList.remove("hide");
+}
+
+function searchSta(key){
+  let allSta = [];
+  for(let l in metroData){
+    metroData[l].stations.forEach(s=>allSta.push({name:s,line:metroData[l].name}));
+  }
+  let res = allSta.filter(item=>item.name.includes(key));
+  let html = "";
+  res.forEach(item=>html += `<button class="sta-btn" onclick="showStationDetail('${item.name}','${item.line}')" ontouchstart="this.timer=setTimeout(()=>longPressCollect('${item.name}'),800)" ontouchend="clearTimeout(this.timer)">${item.name}【${item.line}】</button>`);
+  document.getElementById("searchRes").innerHTML = html;
+  document.getElementById("staDetail").classList.add("hide");
+}
+
+function openSelect(type){
+  selectType = type;
+  let html = "";
+  for(let i in metroData){
+    html+=`<div class="line-title">${metroData[i].name}</div>`;
+    metroData[i].stations.forEach(s=>html+=`<button class="sta-btn" onclick="chooseSta('${s}')">${s}</button>`);
+  }
+  document.getElementById("allLineList").innerHTML = html;
+  document.getElementById("selectBox").classList.remove("hide");
+}
+function chooseSta(name){
+  if(selectType=="start") startPoint = name;
+  else endPoint = name;
+  document.getElementById(selectType=="start"?"startShow":"endShow").innerText = name;
+  closeSelect();
+}
+function closeSelect(){document.getElementById("selectBox").classList.add("hide");}
+function clearRoute(){
+  startPoint=endPoint="";
+  document.getElementById("startShow").innerText="未选择";
+  document.getElementById("endShow").innerText="未选择";
+  document.getElementById("routeResult").classList.add("hide");
+}
+function calculatePrice(stationNum,isTransfer){
+  let total = priceRule.base;
+  let extra = Math.floor((stationNum - 1) / priceRule.rangeNum) * priceRule.rangePrice;
+  total += extra;
+  if(isTransfer) total += priceRule.transferAdd;
+  return total;
+}
+function getLineByStation(name){
+  for(let i in metroData){
+    if(metroData[i].stations.includes(name))return i;
+  }
+  return null;
+}
+function calculateRoute(){
+  if(!startPoint||!endPoint){alert("请选择起点终点");return;}
+  let startLine = getLineByStation(startPoint);
+  let endLine = getLineByStation(endPoint);
+  let routeHtml = "<h3>✅ 详细乘车方案</h3>";
+  let stationCount = 0;let hasTransfer = false;
+  if(startLine == endLine){
+    let arr = metroData[startLine].stations;
+    let sIdx = arr.indexOf(startPoint);
+    let eIdx = arr.indexOf(endPoint);
+    stationCount = Math.abs(eIdx - sIdx);
+    routeHtml += `<div class="step">1. 在【${startPoint}】进站，乘坐${metroData[startLine].name}</div>`;
+    routeHtml += `<div class="step">2. 同向乘车，途经${stationCount}站，直达【${endPoint}】下车</div>`;
+    routeHtml += `<div class="step">3. 出站指引：${exitBus[endPoint].exit}</div>`;
+  }else{
+    hasTransfer = true;let changeStation = "";
+    for(let s in metroData[startLine].transfer){
+      if(metroData[startLine].transfer[s].includes(endLine)){changeStation = s;break;}
+    }
+    let arr1 = metroData[startLine].stations;
+    let idx1 = Math.abs(arr1.indexOf(startPoint) - arr1.indexOf(changeStation));
+    let arr2 = metroData[endLine].stations;
+    let idx2 = Math.abs(arr2.indexOf(changeStation) - arr2.indexOf(endPoint));
+    stationCount = idx1 + idx2;
+    routeHtml += `<div class="step">1. 从【${startPoint}】进站，乘坐${metroData[startLine].name}</div>`;
+    routeHtml += `<div class="step">2. 乘车途经${idx1}站，至【${changeStation}】下车换乘</div>`;
+    if(transferCarGuide[changeStation]) routeHtml += `<div class="hub-guide">🔁换乘通道：${transferCarGuide[changeStation].path}</div>`;
+    routeHtml += `<div class="step">3. 站内换乘${metroData[endLine].name}，继续乘车</div>`;
+    routeHtml += `<div class="step">4. 途经${idx2}站，到达【${endPoint}】下车</div>`;
+    routeHtml += `<div class="step">5. 最优出站口：${exitBus[endPoint].exit}</div>`;
+  }
+  let price = calculatePrice(stationCount,hasTransfer);
+  routeHtml += `<p class="price-text">乘车总价：${price} 元</p>`;
+  document.getElementById("routeResult").innerHTML = routeHtml;
+  document.getElementById("routeResult").classList.remove("hide");
+  let record = getStorage("recordList")||[];
+  record.push(startPoint+"→"+endPoint);
+  setStorage("recordList",record);
+  loadRecordData();
+}
+
+function loadCollectData(){
+  let list = getStorage("collectList")||[];
+  let html = list.length<=0?"暂无收藏":"";
+  list.forEach(item=>html+=`<button class="sta-btn" onclick="showStationDetail('${item}','')">${item}</button>`);
+  document.getElementById("collectList").innerHTML = html;
+}
+function loadRecordData(){
+  let list = getStorage("recordList")||[];
+  let html = list.length<=0?"暂无记录":"";
+  list.forEach(item=>html+=`<div class="notice-item">${item}</div>`);
+  document.getElementById("recordList").innerHTML = html;
+}
+
+function loadSettings(){
+  let set = getStorage("sysSetting");
+  if(!set)return;
+  document.getElementById("autoDark").checked = set.autoDark||false;
+  document.getElementById("showBus").checked = set.showBus||true;
+  document.getElementById("showStationNum").checked = set.showStationNum||true;
+  document.getElementById("autoLoadWeather").checked = set.autoLoadWeather||true;
+  document.getElementById("soundTip").checked = set.soundTip||false;
+  document.getElementById("autoCopyRoute").checked = set.autoCopyRoute||false;
+  document.getElementById("offlineMode").checked = set.offlineMode||true;
+  document.getElementById("colorBlindMode").checked = set.colorBlindMode||false;
+  document.getElementById("simpleView").checked = set.simpleView||false;
+  document.getElementById("avoidStation").checked = set.avoidStation||false;
+  document.getElementById("liftFirst").checked = set.liftFirst||false;
+  document.getElementById("showBarrier").checked = set.showBarrier||true;
+  document.getElementById("showToilet").checked = set.showToilet||true;
+  document.getElementById("showShop").checked = set.showShop||false;
+  document.getElementById("showCrowd").checked = set.showCrowd||false;
+  document.getElementById("voiceRead").checked = set.voiceRead||false;
+  document.getElementById("noticePush").checked = set.noticePush||false;
+  document.getElementById("tripAlarm").checked = set.tripAlarm||false;
+  document.getElementById("homeAddr").value = set.homeAddr||"";
+  document.getElementById("schoolAddr").value = set.schoolAddr||"";
+  document.getElementById("stationAddr").value = set.stationAddr||"";
+  if(set.darkMode)document.body.classList.add("dark");
+}
+function saveSettings(){
+  let obj = {
+    autoDark:document.getElementById("autoDark").checked,
+    showBus:document.getElementById("showBus").checked,
+    showStationNum:document.getElementById("showStationNum").checked,
+    autoLoadWeather:document.getElementById("autoLoadWeather").checked,
+    soundTip:document.getElementById("soundTip").checked,
+    autoCopyRoute:document.getElementById("autoCopyRoute").checked,
+    offlineMode:document.getElementById("offlineMode").checked,
+    colorBlindMode:document.getElementById("colorBlindMode").checked,
+    simpleView:document.getElementById("simpleView").checked,
+    avoidStation:document.getElementById("avoidStation").checked,
+    liftFirst:document.getElementById("liftFirst").checked,
+    showBarrier:document.getElementById("showBarrier").checked,
+    showToilet:document.getElementById("showToilet").checked,
+    showShop:document.getElementById("showShop").checked,
+    showCrowd:document.getElementById("showCrowd").checked,
+    voiceRead:document.getElementById("voiceRead").checked,
+    noticePush:document.getElementById("noticePush").checked,
+    tripAlarm:document.getElementById("tripAlarm").checked,
+    homeAddr:document.getElementById("homeAddr").value,
+    schoolAddr:document.getElementById("schoolAddr").value,
+    stationAddr:document.getElementById("stationAddr").value,
+    darkMode:document.body.classList.contains("dark")
+  };
+  setStorage("sysSetting",obj);
+  document.getElementById("saveTip").style.display = "block";
+}
+
+function toggleDark(){document.body.classList.toggle("dark");}
+function fontSmall(){document.body.style.fontSize="14px";}
+function fontNormal(){document.body.style.fontSize="16px";}
+function fontBig(){document.body.style.fontSize="18px";}
+function clearAllCollect(){setStorage("collectList",[]);loadCollectData();alert("已清空");}
+function clearAllRecord(){setStorage("recordList",[]);loadRecordData();alert("已清空");}
+function resetSystem(){if(confirm("确定恢复全部默认？")){localStorage.clear();location.reload();}}
+function openFeedback(){document.getElementById("overlay").style.display="block";document.getElementById("feedbackBox").style.display="block";}
+function sendMailAuto(){alert("反馈提交成功");closeAllPopup();}
+
+async function refreshWeather(){
+  let statusDom = document.getElementById("refreshStatus");
+  let dataDom = document.getElementById("weatherData");
+  statusDom.style.display = "block";
+  statusDom.innerText = "正在获取最新天气...";
+  try{
+    let res = await fetch(API.weatherApi);
+    let data = await res.json();
+    let weather = data.current_condition[0];
+    let astro = data.weather[0].astronomy[0];
+    let html = `
+    <div class="weather-grid">
+      <div class="weather-card"><h4>所在地</h4><p>济南市</p></div>
+      <div class="weather-card"><h4>天气状况</h4><p>${weather.weatherDesc[0].value}</p></div>
+      <div class="weather-card"><h4>实时温度</h4><p>${weather.temp_C} ℃</p></div>
+      <div class="weather-card"><h4>体感温度</h4><p>${weather.FeelsLikeC} ℃</p></div>
+      <div class="weather-card"><h4>湿度</h4><p>${weather.humidity} %</p></div>
+      <div class="weather-card"><h4>气压</h4><p>${weather.pressure} hPa</p></div>
+      <div class="weather-card"><h4>风速</h4><p>${weather.windspeedKmph} km/h</p></div>
+      <div class="weather-card"><h4>风向</h4><p>${weather.winddir16Point}</p></div>
+    </div>
+    <div class="split-box">
+      <h3>日出日落</h3>
+      <div>日出：${astro.sunrise}</div>
+      <div>日落：${astro.sunset}</div>
+    </div>
+    `;
+    dataDom.innerHTML = html;
+    statusDom.innerText = "天气刷新完成";
+    setTimeout(()=>statusDom.style.display="none",1500);
+  }catch(e){
+    dataDom.innerHTML = "<p>天气加载失败，请稍后重试</p>";
+    statusDom.innerText = "刷新失败";
+    setTimeout(()=>statusDom.style.display="none",1500);
+  }
+}
+
+async function loadNoticeData(){
+  let html = `
+  <div class="split-box">
+    <h3 style="color:#277da1">🚇 地铁官方运营通知</h3>
+    <div class="notice-item">每日凌晨00:00至05:30全线停运检修</div>
+    <div class="notice-item">首班车06:00，末班车22:00，按最晚换乘时间乘车</div>
+    <div class="notice-item">严禁携带危险品、超大行李进站乘车</div>
+  </div>
+  `;
+  document.getElementById("noticeBox").innerHTML = html;
+}
+
+window.onload = function(){
+  loadSettings();
+  loadCollectData();
+  loadRecordData();
+  refreshWeather();
+  loadNoticeData();
+  weatherRefreshTimer = setInterval(refreshWeather,REFRESH_INTERVAL);
+}
+</script>
+</body>
+</html>
