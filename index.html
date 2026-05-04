@@ -2,335 +2,549 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="济南轨道交通综合查询系统 - 清水引擎">
+<meta name="author" content="青灯鸭">
 <title>清水引擎 · 济南轨道交通查询系统</title>
 <style>
 * {
-  margin:0; padding:0; box-sizing:border-box;
-  font-family: "Microsoft Yahei",sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Microsoft Yahei", system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
-:root{
-  --main:#277da1;
-  --light-bg:#f8fafc;
-  --dark-bg:#0f172a;
-  --glass-light:rgba(255,255,255,0.65);
-  --glass-dark:rgba(30,41,59,0.65);
-  --text-light:#1e293b;
-  --text-dark:#f1f5f9;
+html,body{pointer-events:auto !important;}
+button,a,input{
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  z-index:99 !important;
+  position:relative !important;
+}
+:root {
+  --main: #277da1;
+  --glass-light: rgba(255,255,255,0.7);
+  --glass-dark: rgba(30,41,59,0.7);
+  --text-light: #1e293b;
+  --text-dark: #f1f5f9;
+  --line-1: #9b7cb6;
+  --line-2: #f2c300;
+  --line-3: #4682b4;
+  --line-4: #3cb371;
+  --line-6: #5f9dea;
+  --line-8: #9370db;
+  --line-yunba: #00bcd4;
+  --line-tram: #ff7800;
+  --warn-red: #e64340;
+  --warn-orange: #ff9500;
+  --warn-yellow: #facc15;
 }
 body {
-  background: linear-gradient(135deg,#e0f2fe,#f0f9ff);
-  color:var(--text-light);
-  padding-bottom:90px;
+  background: linear-gradient(135deg, #e0f2fe, #f0f9ff);
+  color: var(--text-light);
+  padding-bottom: 85px;
+  font-size: 17px;
   transition: all 0.3s ease;
-  min-height:100vh;
 }
 body.dark {
-  background: linear-gradient(135deg,#1e293b,#0f172a);
-  color:var(--text-dark);
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  color: var(--text-dark);
 }
-.container {
-  max-width:960px; margin:0 auto; padding:12px;
+body.bigfont {
+  font-size: 20px !important;
+}
+.side-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  background: var(--glass-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  padding: 20px;
+  z-index: 1000;
+  border-right: 1px solid rgba(255,255,255,0.3);
+  overflow-y: auto;
+}
+body.dark .side-menu {
+  background: var(--glass-dark);
+  border-right: 1px solid rgba(255,255,255,0.1);
+}
+.side-menu.open {
+  transform: translateX(0);
+}
+.menu-close {
+  text-align: right;
+  font-size: 26px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  user-select: none;
+}
+.side-btn {
+  width: 100%;
+  padding: 16px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 14px;
+  background: rgba(39,125,161,0.15);
+  font-size: 18px;
+  cursor: pointer;
+  text-align: left;
+  transition: 0.2s;
+  user-select: none;
+  color: inherit;
+}
+body.dark .side-btn {
+  background: rgba(39,125,161,0.25);
+}
+.side-btn.active {
+  background: var(--main);
+  color: #fff;
+}
+.side-btn:hover {
+  transform: scale(1.02);
+}
+.menu-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 999;
+  display: none;
 }
 .header {
-  background:var(--glass-light);
+  width: 100%;
+  background: var(--glass-light);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  box-shadow:0 4px 15px rgba(0,0,0,0.08);
-  color:var(--main);
-  text-align:center;
-  padding:18px;
-  border-radius:0 0 20px 20px;
-  border:1px solid rgba(255,255,255,0.3);
-  animation:headAnim 0.5s ease;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 0 0 20px 20px;
+  border: 1px solid rgba(255,255,255,0.3);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  position: sticky;
+  top: 0;
+  z-index: 900;
 }
-@keyframes headAnim{
-  from{opacity:0;transform:translateY(-15px);}
-  to{opacity:1;transform:translateY(0);}
+body.dark .header {
+  background: var(--glass-dark);
+  border-color: rgba(255,255,255,0.1);
 }
-body.dark .header{
-  background:var(--glass-dark);
-  border-color:rgba(255,255,255,0.1);
+.menu-open-btn {
+  font-size: 24px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
 }
-.header-sub{
-  font-size:14px; margin-top:6px; opacity:0.85;
+.header-title h1 {
+  font-size: 22px;
+  color: var(--main);
+  text-align: center;
 }
-.nav {
-  display:flex; flex-wrap:wrap; gap:8px;
-  margin:18px 0; justify-content:center;
-  animation:navAnim 0.5s ease 0.1s both;
-}
-@keyframes navAnim{
-  from{opacity:0;transform:translateY(10px);}
-  to{opacity:1;transform:translateY(0);}
-}
-.nav button {
-  padding:9px 16px; border:none; border-radius:25px;
-  background:var(--glass-light);
-  backdrop-filter: blur(8px);
-  cursor:pointer;
-  box-shadow:0 3px 10px rgba(0,0,0,0.06);
-  transition:all 0.25s ease;
-  border:1px solid rgba(255,255,255,0.25);
-}
-.nav button:hover{
-  transform:translateY(-2px) scale(1.02);
-  box-shadow:0 5px 15px rgba(39,125,161,0.2);
-}
-.nav button.active {
-  background:var(--main);
-  color:#fff;
-  transform:scale(1.05);
-}
-body.dark .nav button {
-  background:var(--glass-dark);
-  border-color:rgba(255,255,255,0.1);
-}
-.card {
-  background:var(--glass-light);
-  backdrop-filter: blur(10px);
-  border-radius:18px;
-  padding:18px;
-  margin-bottom:16px;
-  box-shadow:0 4px 16px rgba(0,0,0,0.07);
-  border:1px solid rgba(255,255,255,0.3);
-  transition:all 0.3s ease;
-  animation:cardAnim 0.4s ease forwards;
-  opacity:0;
-}
-@keyframes cardAnim{to{opacity:1;}}
-body.dark .card {
-  background:var(--glass-dark);
-  border-color:rgba(255,255,255,0.1);
-}
-h2 {
-  color:var(--main); margin-bottom:14px;
-  border-left:4px solid var(--main); padding-left:12px;
-}
-h3 {margin:12px 0 8px;}
-.line-title {
-  font-weight:bold; color:var(--main);
-  margin:12px 0 6px;
-}
-.line-btn {
-  padding:7px 14px; border:none; border-radius:20px;
-  color:#fff; margin:4px; cursor:pointer;
-  transition:0.2s;
-}
-.line-btn:hover{transform:scale(1.05);}
-.sta-btn {
-  padding:6px 10px; border:none; border-radius:12px;
-  margin:3px; background:rgba(220,230,245,0.55);
-  backdrop-filter: blur(6px);
-  cursor:pointer;
-  transition:0.2s ease;
-}
-body.dark .sta-btn {
-  background:rgba(50,60,80,0.55);
-}
-.sta-btn:hover {
-  background:var(--main); color:#fff;
-  transform:scale(1.03);
+.header-sub {
+  font-size: 14px;
+  opacity: 0.85;
+  text-align: center;
 }
 .func-btn {
-  padding:7px 14px; background:var(--main);
-  color:#fff; border:none; border-radius:8px;
-  cursor:pointer; margin:4px;
-  transition:0.25s ease;
-  box-shadow:0 3px 8px rgba(39,125,161,0.25);
+  padding: 12px 18px;
+  background: var(--main);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 17px;
+  transition: 0.2s;
+  box-shadow: 0 3px 8px rgba(39,125,161,0.25);
 }
-.func-btn:hover{
-  transform:translateY(-2px);
-  box-shadow:0 5px 12px rgba(39,125,161,0.35);
+.func-btn:hover {
+  transform: translateY(-2px);
 }
-.danger-btn{
-  padding:7px 14px; background:#e64340;
-  color:#fff; border:none; border-radius:8px;
-  cursor:pointer; margin:4px;
-  transition:0.25s ease;
+.danger-btn {
+  padding: 12px 18px;
+  background: #e64340;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 17px;
+  transition: 0.2s;
 }
-.danger-btn:hover{transform:translateY(-2px);}
-.hide {display:none !important;}
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  background: var(--glass-light);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255,255,255,0.3);
+  z-index: 998;
+}
+body.dark .bottom-nav {
+  background: var(--glass-dark);
+  border-color: rgba(255,255,255,0.1);
+}
+.bottom-nav button {
+  flex: 1;
+  padding: 14px 5px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+  color: inherit;
+}
+.bottom-nav button.active {
+  color: var(--main);
+  font-weight: bold;
+}
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 12px;
+}
+.card {
+  background: var(--glass-light);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+body.dark .card {
+  background: var(--glass-dark);
+  border-color: rgba(255,255,255,0.1);
+}
+h2 {
+  color: var(--main);
+  margin-bottom: 14px;
+  border-left: 4px solid var(--main);
+  padding-left: 12px;
+  font-size: 22px;
+}
+h3 {
+  margin: 12px 0 8px;
+  font-size: 19px;
+}
+h4 {
+  margin: 10px 0 6px;
+  font-size: 17px;
+  color: var(--main);
+}
+.hide {
+  display: none !important;
+}
+.line-btn {
+  padding: 14px 20px;
+  border: none;
+  border-radius: 16px;
+  color: #fff;
+  margin: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 17px;
+}
+.line-btn:hover {
+  transform: scale(1.05);
+}
+.sta-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+.sta-btn {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 14px;
+  margin: 5px;
+  background: rgba(220,230,245,0.55);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: 0.2s ease;
+  font-size: 16px;
+  color: inherit;
+}
+body.dark .sta-btn {
+  background: rgba(50,60,80,0.55);
+}
+.sta-btn:hover {
+  background: var(--main);
+  color: #fff;
+  transform: scale(1.03);
+}
 .info-box {
-  margin-top:14px; padding:14px;
-  background:rgba(248,249,255,0.6);
+  margin-top: 14px;
+  padding: 16px;
+  background: rgba(248,249,255,0.6);
   backdrop-filter: blur(8px);
-  border-left:4px solid var(--main);
-  line-height:1.8; border-radius:0 10px 10px 0;
+  -webkit-backdrop-filter: blur(8px);
+  border-left: 4px solid var(--main);
+  line-height: 1.8;
+  border-radius: 0 10px 10px 0;
 }
 body.dark .info-box {
-  background:rgba(37,37,56,0.6);
+  background: rgba(37,37,56,0.6);
 }
 .hub-guide {
-  margin-top:10px; padding:10px;
-  background:rgba(255,242,232,0.6);
+  margin-top: 10px;
+  padding: 12px;
+  background: rgba(255,242,232,0.6);
   backdrop-filter: blur(8px);
-  border-left:4px solid #ff9500;
-  border-radius:8px;
+  border-left: 4px solid #ff9500;
+  border-radius: 8px;
 }
-.car-guide{
-  margin-top:10px;padding:10px;
-  background:rgba(230,244,255,0.6);
+.weather-warn-box {
+  margin: 12px 0;
+  padding: 14px;
+  border-radius: 10px;
+  border-left: 4px solid var(--warn-red);
+  background: rgba(230,67,64,0.15);
   backdrop-filter: blur(8px);
-  border-left:4px solid #1890ff;border-radius:8px;
+  font-weight: bold;
 }
-.time-box{
-  padding:8px;
-  background:rgba(255,250,230,0.6);
-  border-radius:6px;
-  margin:8px 0;
+.weather-warn-box.yellow {
+  border-left: 4px solid var(--warn-yellow);
+  background: rgba(250,204,21,0.15);
 }
-.bus-box{
-  padding:8px;
-  background:rgba(235,245,255,0.6);
-  border-radius:6px;
-  margin:8px 0;
+.weather-warn-box.orange {
+  border-left: 4px solid var(--warn-orange);
+  background: rgba(255,149,0,0.15);
 }
-.other-box{
-  padding:8px;
-  background:rgba(245,240,255,0.6);
-  border-radius:6px;
-  margin:8px 0;
+.time-box, .bus-box, .other-box {
+  padding: 12px;
+  border-radius: 8px;
+  margin: 10px 0;
+  background: rgba(255,250,230,0.6);
 }
-.scenic-tag{color:#009966;font-weight:bold;}
-.mall-tag{color:#9349eb;font-weight:bold;}
+body.dark .time-box, body.dark .bus-box, body.dark .other-box {
+  background: rgba(40,40,60,0.6);
+}
+.scenic-tag {
+  color: #009966;
+  font-weight: bold;
+}
+.mall-tag {
+  color: #9349eb;
+  font-weight: bold;
+}
 .search {
-  width:100%; padding:12px; border:none; border-radius:14px;
-  margin-bottom:12px; outline:none;
-  background:var(--glass-light);
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 16px;
+  margin-bottom: 15px;
+  outline: none;
+  background: var(--glass-light);
   backdrop-filter: blur(8px);
-  border:1px solid rgba(255,255,255,0.3);
+  border: 1px solid rgba(255,255,255,0.3);
+  font-size: 17px;
+  color: inherit;
 }
 body.dark .search {
-  background:var(--glass-dark);
-  border-color:rgba(255,255,255,0.1);
+  background: var(--glass-dark);
+  border-color: rgba(255,255,255,0.1);
 }
 .footer {
-  position:fixed; bottom:0; width:100%;
-  text-align:center; padding:14px 10px;
-  background:var(--glass-light);
-  backdrop-filter: blur(12px);
-  border-top:1px solid rgba(255,255,255,0.3);
-  font-size:13px;
-}
-body.dark .footer {
-  background:var(--glass-dark);
-  border-color:rgba(255,255,255,0.1);
+  position: fixed;
+  bottom: 60px;
+  width: 100%;
+  text-align: center;
+  padding: 8px 10px;
+  font-size: 13px;
+  opacity: 0.7;
 }
 .overlay {
-  position:fixed; inset:0; background:rgba(0,0,0,0.45);
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
   backdrop-filter: blur(4px);
-  display:none; z-index:9998;
+  display: none;
+  z-index: 9998;
 }
 .popup {
-  position:fixed; top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  background:var(--glass-light);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  background: var(--glass-light);
   backdrop-filter: blur(14px);
-  border-radius:20px;
-  z-index:9999; display:none;
-  width:90%; max-width:450px;
-  padding:24px;
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 20px;
+  z-index: 9999;
+  display: none;
+  width: 92%;
+  max-width: 480px;
+  padding: 28px;
 }
-body.dark .popup {background:var(--glass-dark);}
+body.dark .popup {
+  background: var(--glass-dark);
+}
 .notice-item {
-  padding:14px; border-bottom:1px solid rgba(0,0,0,0.08);
-  margin:10px 0; line-height:1.7;
+  padding: 15px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  margin: 12px 0;
+  line-height: 1.8;
 }
-.notice-tit {color:#e64340; font-weight:bold; margin-bottom:6px;}
-.set-item {margin:14px 0; line-height:1.7; padding:6px 0;}
-.split-box {
-  margin:16px 0; padding:12px;
-  border:1px dashed rgba(39,125,161,0.3); border-radius:12px;
+.notice-tit {
+  color: #e64340;
+  font-weight: bold;
+  margin-bottom: 8px;
 }
-.step{margin:10px 0;padding:10px;background:rgba(238,245,255,0.55);border-radius:8px;}
-.price-text{color:#e64340;font-weight:bold;}
-.weather-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0;}
-.weather-card{background:rgba(240,246,255,0.55);padding:14px;border-radius:12px;text-align:center;}
-body.dark .weather-card{background:rgba(37,37,56,0.55);}
-.address-input{width:100%;padding:8px;border-radius:8px;border:none;margin:5px 0;}
-.tip-popup{
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  background:#fff;
-  padding:25px 40px;
-  border-radius:12px;
-  box-shadow:0 0 20px #0003;
-  z-index:10000;
-  display:none;
-  text-align:center;
+.set-item {
+  margin: 16px 0;
+  line-height: 1.8;
+  padding: 8px 0;
 }
-.tip-popup p{font-size:16px;margin-bottom:15px;}
-.tip-popup button{
-  padding:6px 20px;
-  border:none;
-  background:#277da1;
-  color:#fff;
-  border-radius:6px;
-  cursor:pointer;
+.tip-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  background: #fff;
+  padding: 30px 45px;
+  border-radius: 14px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.2);
+  z-index: 10000;
+  display: none;
+  text-align: center;
+}
+body.dark .tip-popup {
+  background: #1e293b;
+  color: #fff;
 }
 .refresh-weather-btn {
-  background:var(--main);
-  color:#fff;
-  border:none;
-  border-radius:8px;
-  padding:8px 16px;
-  cursor:pointer;
-  margin-bottom:12px;
-  transition:all 0.2s ease;
-}
-.refresh-weather-btn:hover {
-  transform:scale(1.05);
-  box-shadow:0 4px 8px rgba(39,125,161,0.3);
+  background: var(--main);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  cursor: pointer;
+  margin-bottom: 15px;
+  font-size: 17px;
 }
 .refresh-status {
-  color:#277da1;
-  font-size:13px;
-  margin-bottom:8px;
-  display:none;
+  color: var(--main);
+  font-size: 15px;
+  margin-bottom: 10px;
+  display: none;
+}
+.weather-card {
+  line-height: 1.8;
+}
+.weather-real-time {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin: 15px 0;
+}
+.weather-item {
+  flex: 1 1 140px;
+  padding: 10px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 10px;
+  text-align: center;
+}
+body.dark .weather-item {
+  background: rgba(255,255,255,0.1);
+}
+.weather-item .label {
+  font-size: 14px;
+  opacity: 0.8;
+}
+.weather-item .value {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 5px;
+}
+.weather-forecast {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px 0;
+}
+.forecast-item {
+  min-width: 120px;
+  padding: 12px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 10px;
+  text-align: center;
+  flex-shrink: 0;
+}
+body.dark .forecast-item {
+  background: rgba(255,255,255,0.1);
+}
+.forecast-date {
+  font-size: 14px;
+  font-weight: bold;
+}
+.forecast-temp {
+  margin: 8px 0;
+  font-size: 16px;
+}
+.price-rule {
+  font-size: 14px;
+  opacity: 0.8;
+  margin-top: 10px;
+  line-height: 1.6;
+}
+.collect-btn-inline {
+  padding: 10px 16px;
+  background: var(--main);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
 }
 </style>
 </head>
 <body>
+
+<div class="side-menu" id="sideMenu">
+  <div class="menu-close" id="menuClose" onclick="closeSideMenu()">✕</div>
+  <button class="side-btn" onclick="switchPage('index')">首页主页</button>
+  <button class="side-btn" onclick="switchPage('line')">线路查询</button>
+  <button class="side-btn" onclick="switchPage('station')">站点搜索</button>
+  <button class="side-btn" onclick="switchPage('route')">路线规划</button>
+  <button class="side-btn" onclick="switchPage('collect')">我的收藏</button>
+  <button class="side-btn" onclick="switchPage('record')">查询记录</button>
+  <button class="side-btn" onclick="switchPage('weather')">天气查询</button>
+  <button class="side-btn" onclick="switchPage('notice')">乘客须知</button>
+  <button class="side-btn" onclick="switchPage('settings')">系统设置</button>
+  <button class="side-btn" onclick="switchPage('about')">关于系统</button>
+</div>
+<div class="menu-mask" id="menuMask" onclick="closeSideMenu()"></div>
+
 <div class="header">
-  <h1>清水引擎 · 济南轨道交通查询系统</h1>
-  <div class="header-sub">原生JS · 零依赖 · 本地计算 · 永远不作恶</div>
+  <button class="menu-open-btn" id="menuOpen" onclick="openSideMenu()">☰</button>
+  <div class="header-title">
+    <h1>清水引擎</h1>
+    <div class="header-sub">济南轨道交通综合查询系统</div>
+  </div>
+  <button class="func-btn" onclick="toggleDark()">深色</button>
 </div>
 
-<div class="nav">
-  <button onclick="switchPage('index')" class="active">首页</button>
-  <button onclick="switchPage('line')">线路查询</button>
-  <button onclick="switchPage('station')">站点查询</button>
-  <button onclick="switchPage('route')">路线规划</button>
-  <button onclick="switchPage('collect')">收藏</button>
-  <button onclick="switchPage('record')">记录</button>
-  <button onclick="switchPage('weather')">天气</button>
-  <button onclick="switchPage('notice')">乘车通知</button>
-  <button onclick="switchPage('settings')">设置</button>
-  <button onclick="switchPage('about')">关于清水引擎</button>
-  <button onclick="toggleDark()">深色模式</button>
-  <button onclick="openFeedback()" style="background:#11c778;color:#fff;">反馈</button>
-</div>
-
-<div class="overlay" id="overlay" onclick="closeAllPopup()"></div>
+<div class="overlay" id="overlay" onclick="closeAllPop()"></div>
 <div class="popup" id="collectPopup">
-  <h3>站点操作</h3>
+  <h3>站点收藏操作</h3>
   <p id="collectStaName"></p>
-  <button class="func-btn" onclick="addCollect()">加入收藏</button>
-  <button class="danger-btn" onclick="closeAllPopup()">取消</button>
-</div>
-<div class="popup" id="feedbackBox">
-  <h3>意见反馈</h3>
-  <p>邮箱：qingdengduck@163.com</p>
-  <textarea id="feedContent" style="width:100%;height:120px;padding:12px;border-radius:12px;border:none;resize:none;" placeholder="填写建议"></textarea>
-  <button class="func-btn" onclick="sendMailAuto()">提交</button>
-  <button class="func-btn" style="background:#999" onclick="closeAllPopup()">取消</button>
+  <button class="func-btn" onclick="addCollect(nowCollectSta)">加入收藏</button>
+  <button class="danger-btn" onclick="closeAllPop()">取消</button>
 </div>
 
 <div class="tip-popup" id="saveTip">
-  <p>✅ 设置保存成功<br>所有配置已永久生效</p>
+  <p>✅ 设置已自动保存<br>全部配置即时生效</p>
   <button onclick="closeTip()">确定</button>
 </div>
 
@@ -338,39 +552,33 @@ body.dark .weather-card{background:rgba(37,37,56,0.55);}
   <div id="index" class="page">
     <div class="card">
       <h2>清水引擎 核心优势</h2>
-      <p>✅ 纯本地计算，断网照常使用</p>
-      <p>✅ 无广告、无弹窗、永不跳转诈骗网站</p>
-      <p>✅ 不获取任何隐私权限，不收集个人数据</p>
-      <p>✅ 全站点出入口、公交、商场、景区一键查询</p>
-      <p>✅ 全部换乘站/火车站配备专属乘车车厢建议</p>
-      <p>✅ 路线规划自动计价，出行方案智能推荐</p>
-      <p>✅ 数据仅保存在本机浏览器，隐私绝对安全</p>
+      <p>✅ 全线采用济南地铁官方标准站名，无任何工程名称</p>
+      <p>✅ 纯本地计算，断网照常使用，无广告无弹窗</p>
+      <p>✅ 全站点出入口、公交接驳、周边商圈景区一站式查询</p>
+      <p>✅ 精准换乘指引，最少步行最优路线规划，赶车优先模式</p>
+      <p>✅ 官方标准计价，票价精准无误</p>
+      <p>✅ 天气系统深度联动路线规划，特殊天气智能预警</p>
     </div>
-    <div class="card">
-      <h2>系统功能清单</h2>
-      <p>1. 全线路完整站点+公交接驳查询</p>
-      <p>2. 火车站/机场专属快捷进站乘车指引</p>
-      <p>3. 全站站点模糊搜索，毫秒级响应</p>
-      <p>4. 济南实时天气查询+出行生活指数</p>
-      <p>5. 智能路线规划+票价自动计算</p>
-      <p>6. 全部换乘枢纽推荐车厢+换乘通道指引</p>
-      <p>7. 地下连通商场、周边景区标注查询</p>
-      <p>8. 赶车优先模式，适配高铁飞机快捷出行</p>
+    <div class="card weather-card" id="indexWeatherCard">
+      <h2>济南实时天气</h2>
+      <div class="refresh-status" id="indexWeatherStatus">正在获取天气数据...</div>
+      <button class="refresh-weather-btn" onclick="getWeatherInfo('index')">🔄 刷新天气</button>
+      <div id="indexWeatherContent"></div>
     </div>
   </div>
 
   <div id="line" class="page hide">
     <div class="card">
       <h2>轨道交通线路</h2>
-      <div>
-        <button class="line-btn" style="background:#9b7cb6" onclick="getSub(1)">1号线</button>
-        <button class="line-btn" style="background:#f2c300;color:#000" onclick="getSub(2)">2号线</button>
-        <button class="line-btn" style="background:#4682b4" onclick="getSub(3)">3号线</button>
-        <button class="line-btn" style="background:#3cb371" onclick="getSub(4)">4号线</button>
-        <button class="line-btn" style="background:#5f9dea" onclick="getSub(6)">6号线</button>
-        <button class="line-btn" style="background:#9370db" onclick="getSub(8)">8号线</button>
-        <button class="line-btn" style="background:#00bcd4" onclick="getSub('yunba')">云巴环线</button>
-        <button class="line-btn" style="background:#ff7800" onclick="getSub('tram')">有轨电车</button>
+      <div id="lineBtnBox">
+        <button class="line-btn" style="background:var(--line-1)" onclick="getLineData('1')">1号线（运营中）</button>
+        <button class="line-btn" style="background:var(--line-2);color:#000" onclick="getLineData('2')">2号线（运营中）</button>
+        <button class="line-btn" style="background:var(--line-3)" onclick="getLineData('3')">3号线（运营中）</button>
+        <button class="line-btn" style="background:var(--line-4)" onclick="getLineData('4')">4号线（全线运营）</button>
+        <button class="line-btn" style="background:var(--line-6)" onclick="getLineData('6')">6号线（东段运营）</button>
+        <button class="line-btn" style="background:var(--line-8)" onclick="getLineData('8')">8号线（运营中）</button>
+        <button class="line-btn" style="background:var(--line-yunba)" onclick="getLineData('yunba')">云巴环线（运营中）</button>
+        <button class="line-btn" style="background:var(--line-tram)" onclick="getLineData('tram')">有轨电车1号线（运营中）</button>
       </div>
       <div id="subSta"></div>
       <div id="subInfo" class="info-box hide"></div>
@@ -379,8 +587,8 @@ body.dark .weather-card{background:rgba(37,37,56,0.55);}
 
   <div id="station" class="page hide">
     <div class="card">
-      <h2>全站站点模糊搜索</h2>
-      <input class="search" placeholder="输入关键字模糊查找站点" oninput="searchSta(this.value)">
+      <h2>智能综合搜索</h2>
+      <input class="search" placeholder="站点/商场/景区/拼音首字母均可搜索" id="searchInput" oninput="searchStation(this.value)">
       <div id="searchRes"></div>
       <div id="staDetail" class="info-box hide"></div>
     </div>
@@ -388,23 +596,25 @@ body.dark .weather-card{background:rgba(37,37,56,0.55);}
 
   <div id="route" class="page hide">
     <div class="card">
-      <h2>智能路线规划</h2>
+      <h2>精准路线规划</h2>
       <p>起点：<span id="startShow">未选择</span></p>
       <p>终点：<span id="endShow">未选择</span></p>
-      <div style="margin:10px 0;">
-        <label><input type="checkbox" id="fastMode"> 开启赶火车/飞机优先模式</label>
+      <div style="margin:12px 0;">
+        <label><input type="checkbox" id="fastMode"> 赶车优先模式（优先同站台换乘）</label>
       </div>
-      <button class="func-btn" onclick="openSelect('start')">选择起点</button>
-      <button class="func-btn" onclick="openSelect('end')">选择终点</button>
-      <button class="func-btn" onclick="clearRoute()">清空选择</button>
+      <button class="func-btn" onclick="openSelectBox('start')">选择起点</button>
+      <button class="func-btn" onclick="openSelectBox('end')">选择终点</button>
+      <button class="func-btn" onclick="clearRouteData()">清空选择</button>
       <button class="func-btn" onclick="calculateRoute()">开始规划</button>
-
-      <div id="selectBox" class="hide" style="margin-top:18px;border-top:1px solid rgba(0,0,0,0.08);padding-top:18px;">
+      <div id="selectBox" class="hide" style="margin-top:20px;border-top:1px solid rgba(0,0,0,0.08);padding-top:20px;">
         <h3>选择站点</h3>
         <div id="allLineList"></div>
-        <button class="func-btn" onclick="closeSelect()">关闭</button>
+        <button class="func-btn" onclick="closeSelectBox()">关闭</button>
       </div>
       <div id="routeResult" class="info-box hide"></div>
+      <div class="price-rule">
+        <p>📌 济南地铁官方计价规则：起步价2元可乘5公里，逐级递增，全线网最高票价10元；地铁与云巴联程合并里程计费，免重复起步价</p>
+      </div>
     </div>
   </div>
 
@@ -423,505 +633,296 @@ body.dark .weather-card{background:rgba(37,37,56,0.55);}
   </div>
 
   <div id="weather" class="page hide">
-    <div class="card">
-      <h2>济南实时天气</h2>
-      <div id="refreshStatus" class="refresh-status">正在刷新天气数据...</div>
-      <button class="refresh-weather-btn" onclick="refreshWeather()">🔄 手动刷新天气</button>
-      <div id="weatherData">正在请求天气数据...</div>
-      <div style="margin-top:12px; font-size:12px; color:#666;">
-        <p>天气数据每10分钟自动刷新一次</p>
-      </div>
+    <div class="card weather-card">
+      <h2>济南完整天气查询</h2>
+      <div class="refresh-status" id="weatherStatus">正在刷新天气数据...</div>
+      <button class="refresh-weather-btn" onclick="getWeatherInfo('page')">🔄 手动刷新天气</button>
+      <div id="weatherContent"></div>
     </div>
   </div>
 
   <div id="notice" class="page hide">
     <div class="card">
-      <h2>乘车官方分类通知公告</h2>
-      <div id="noticeBox"></div>
+      <h2>公交地铁通用乘客须知</h2>
+      <div id="noticeBox">
+        <div class="notice-item">
+          <div class="notice-tit">一、乘车基本规范</div>
+          <p>1. 自觉排队候车，有序上下车，不拥挤争抢</p>
+          <p>2. 主动配合安检，严禁携带易燃易爆危险品乘车</p>
+          <p>3. 车辆行驶中禁止随意走动、倚靠车门</p>
+        </div>
+        <div class="notice-item">
+          <div class="notice-tit">二、文明乘车要求</div>
+          <p>1. 主动为老人、孕妇、儿童、残疾人让座</p>
+          <p>2. 车内禁止吸烟、随地吐痰、乱扔杂物</p>
+          <p>3. 不大声喧哗、外放音频，保持车厢安静</p>
+        </div>
+        <div class="notice-item">
+          <div class="notice-tit">三、优惠政策说明</div>
+          <p>1. 现役军人、消防救援人员、60周岁以上老人、残疾人凭有效证件免费乘车</p>
+          <p>2. 身高1.3米以下儿童免费乘车，需成人陪同</p>
+          <p>3. 济南市中小学生持学生卡4折优惠，普通乘客刷卡8折优惠</p>
+        </div>
+        <div class="notice-item">
+          <div class="notice-tit">四、运营时间说明</div>
+          <p>1. 1/2/3/4/6号线：6:00-22:30</p>
+          <p>2. 8号线：6:00-22:05</p>
+          <p>3. 有轨电车1号线：6:00-21:00</p>
+          <p>4. 济南云巴环线：6:00-22:00</p>
+        </div>
+        <div class="notice-item">
+          <div class="notice-tit">五、安全注意事项</div>
+          <p>1. 开关门切勿伸手探头，防止夹伤</p>
+          <p>2. 紧急情况听从工作人员指挥有序疏散</p>
+          <p>3. 保管好个人随身物品，谨防丢失</p>
+          <p>4. 官方服务热线：0531-59995999</p>
+        </div>
+      </div>
     </div>
   </div>
 
   <div id="settings" class="page hide">
     <div class="card">
-      <h2>通用基础设置</h2>
+      <h2>常用简易设置</h2>
       <div class="set-item">
-        <label><input type="checkbox" id="autoDark"> 夜间自动切换深色模式</label>
+        <label><input type="checkbox" id="autoDark" onchange="saveSettingAuto()"> 夜间自动深色模式</label>
       </div>
       <div class="set-item">
-        <label><input type="checkbox" id="showBus"> 路线页面显示公交接驳信息</label>
+        <label><input type="checkbox" id="showBus" onchange="saveSettingAuto()"> 显示公交接驳信息</label>
       </div>
       <div class="set-item">
-        <label><input type="checkbox" id="showStationNum"> 自动显示途经站点数量</label>
+        <label><input type="checkbox" id="autoLoadWeather" onchange="saveSettingAuto()"> 首页自动加载天气</label>
       </div>
       <div class="set-item">
-        <label><input type="checkbox" id="autoLoadWeather"> 打开首页自动加载天气</label>
+        <label><input type="checkbox" id="liftFirst" onchange="saveSettingAuto()"> 优先无障碍电梯通道</label>
       </div>
       <div class="set-item">
-        <label><input type="checkbox" id="soundTip"> 操作开启音效提示</label>
-      </div>
-      <div class="set-item">
-        <label><input type="checkbox" id="autoCopyRoute"> 规划路线后自动复制文本</label>
-      </div>
-      <div class="set-item">
-        <label><input type="checkbox" id="offlineMode"> 开启离线浏览（断网可用全部线路数据）</label>
-      </div>
-      <div class="set-item">
-        <label><input type="checkbox" id="colorBlindMode"> 开启色盲高对比护眼模式</label>
-      </div>
-      <div class="set-item">
-        <label><input type="checkbox" id="simpleView"> 简约视图模式（精简页面，快速浏览）</label>
+        <label><input type="checkbox" id="voiceRead" onchange="saveSettingAuto()"> 路线自动语音朗读</label>
       </div>
     </div>
-
     <div class="card">
-      <h2>出行偏好高级设置</h2>
-      <div class="set-item">
-        <label><input type="radio" name="routeSort" value="fast"> 优先最快出行方案</label>
-      </div>
-      <div class="set-item">
-        <label><input type="radio" name="routeSort" value="less"> 优先少换乘出行方案</label>
-      </div>
-      <div class="set-item">
-        <label><input type="radio" name="walkSort" value="short"> 优先步行距离最短</label>
-      </div>
-      <div class="set-item">
-        <h4>出行人群模式</h4>
-        <label><input type="radio" name="crowdMode" value="normal"> 通用通勤模式</label>
-        <label><input type="radio" name="crowdMode" value="slow"> 老人慢速换乘模式</label>
-        <label><input type="radio" name="crowdMode" value="bag"> 大件行李无障碍模式</label>
-      </div>
-      <div class="set-item">
-        <h4>常用快捷地址绑定</h4>
-        <input class="address-input" id="homeAddr" placeholder="填写家庭地址">
-        <input class="address-input" id="schoolAddr" placeholder="填写学校地址">
-        <input class="address-input" id="stationAddr" placeholder="填写常用车站">
-      </div>
-      <div class="set-item">
-        <label><input type="checkbox" id="avoidStation"> 自定义永久避开指定站点</label>
-      </div>
-      <div class="set-item">
-        <label><input type="checkbox" id="liftFirst"> 换乘优先选择电梯无障碍通道</label>
-      </div>
+      <h2>字体全局大小调节</h2>
+      <button class="func-btn" onclick="setFontSmall()">标准字体</button>
+      <button class="func-btn" onclick="setFontNormal()">加大字体</button>
+      <button class="func-btn" onclick="setFontBig()">老人超大全局字体</button>
     </div>
-
     <div class="card">
-      <h2>站点便民设施显示设置</h2>
+      <h2>数据清理</h2>
       <div class="set-item">
-        <label><input type="checkbox" id="showBarrier"> 显示无障碍电梯、母婴室、轮椅通道</label>
+        <button class="danger-btn" onclick="clearAllCollect()">清空全部收藏</button>
       </div>
       <div class="set-item">
-        <label><input type="checkbox" id="showToilet"> 显示站内卫生间分布位置</label>
+        <button class="danger-btn" onclick="clearAllRecord()">清空查询记录</button>
       </div>
       <div class="set-item">
-        <label><input type="checkbox" id="showShop"> 显示便利店、饮水处、警务便民点</label>
-      </div>
-      <div class="set-item">
-        <label><input type="checkbox" id="showCrowd"> 显示站点人流量拥挤程度</label>
+        <button class="danger-btn" onclick="resetAllSys()">恢复系统默认</button>
       </div>
     </div>
-
-    <div class="card">
-      <h2>语音播报与出行提醒</h2>
-      <div class="set-item">
-        <label><input type="checkbox" id="voiceRead"> 路线规划完成自动语音朗读</label>
-      </div>
-      <div class="set-item">
-        <label><input type="checkbox" id="noticePush"> 接收线路停运、施工调整通知</label>
-      </div>
-      <div class="set-item">
-        <label><input type="checkbox" id="tripAlarm"> 自定义乘车闹钟提醒</label>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>界面字体设置</h2>
-      <div class="set-item">
-        <button class="func-btn" onclick="fontSmall()">字体缩小</button>
-        <button class="func-btn" onclick="fontNormal()">标准字体</button>
-        <button class="func-btn" onclick="fontBig()">字体放大</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>数据清理管理</h2>
-      <div class="set-item">
-        <button class="danger-btn" onclick="clearAllCollect()">清空全部收藏站点</button>
-      </div>
-      <div class="set-item">
-        <button class="danger-btn" onclick="clearAllRecord()">清空全部查询记录</button>
-      </div>
-      <div class="set-item">
-        <button class="danger-btn" onclick="resetSystem()">恢复系统默认全部设置</button>
-      </div>
-    </div>
-
     <div class="card">
       <h2>系统信息</h2>
       <p>开发作者：青灯鸭</p>
       <p>系统名称：清水引擎</p>
       <p>适用地区：济南市全域轨道交通</p>
-      <p>设计理念：透明纯净，坚守不作恶原则</p>
-      <p>版本：V2.3 完整版</p>
+      <p>版本：最终核定纯净版</p>
+      <p>数据更新：全线官方标准站名 无工程名</p>
     </div>
-
-    <button class="func-btn" onclick="saveSettings()">保存全部设置</button>
   </div>
 
   <div id="about" class="page hide">
     <div class="card">
       <h2>清水引擎 项目介绍</h2>
-      <div class="article-text" style="line-height:2.1;padding:10px;">
-<p>因为官方系统会跳转诈骗网站，所以我写了一个干净的</p>
-<p><strong>原生JS · 零依赖 · 本地计算 · 永远不作恶</strong></p>
-<br>
-<h3>一、不作恶的初心</h3>
-<p>Google 曾经有个口号：“不作恶”</p>
-<p>很多年前，Google 把 “Don't be evil” 写进了行为准则里。</p>
-<p>广告平台会收集隐私数据，我希望打造零权限纯净工具。</p>
-<br>
-<h3>二、创作初衷</h3>
-<p>济南地铁官网曾长期被劫持跳转诈骗页面，因此独立开发本系统。</p>
-<p>全部数据本地储存，无广告无跳转，安全稳定。</p>
-<br>
-<h3>三、技术架构</h3>
-<p>纯前端本地运行，断网可用，数据全部内置</p>
-<p>路线计算、票价、搜索全部本地运算</p>
-<p>用户数据仅存浏览器，不会上传</p>
-<br>
-<h3>四、优势</h3>
-<p>加载快、无劫持、无广告、隐私安全</p>
-<br>
-<h3>五、承诺</h3>
-<p>全程无追踪、无后门、永久纯净</p>
-<br>
-<p style="text-align:center;color:var(--main);font-weight:bold;">
-清水——透明、纯净、不掺杂质<br>
-坚守初心 不作恶
-</p>
-<p style="text-align:right;">——青灯鸭</p>
+      <div style="line-height:2.2;padding:12px;">
+        <p>原生JS开发，零广告零劫持，纯本地运行</p>
+        <p>精准路线规划+官方标准计价，数据严谨可靠</p>
+        <p>坚守不作恶理念，保护用户全部隐私</p>
+        <p style="text-align:center;font-weight:bold;">清水纯净 安全出行</p>
+        <p style="text-align:right;">——青灯鸭</p>
       </div>
     </div>
   </div>
 </div>
 
 <div class="footer">
-©️青灯鸭 | 清水引擎 纯净轨道交通查询系统<br>
-不作恶 · 保隐私 · 无劫持 · 安全出行
-</div><script>
-const API = {weatherApi: "https://wttr.in/Jinan?format=j1&lang=zh"};
-const priceRule = {base:2,rangePrice:1,rangeNum:5,transferAdd:1};
-let nowCollectSta = "";
-let selectType = "",startPoint = "",endPoint = "";
-let weatherRefreshTimer = null;
-const REFRESH_INTERVAL = 10*60*1000;
+©️青灯鸭 | 清水引擎 纯净轨道交通查询系统
+</div>
 
-function closeTip(){
-  document.getElementById("saveTip").style.display = "none";
+<div class="bottom-nav">
+  <button onclick="switchPage('index')" class="active">首页</button>
+  <button onclick="switchPage('line')">线路</button>
+  <button onclick="switchPage('route')">规划</button>
+  <button onclick="switchPage('collect')">收藏</button>
+  <button onclick="switchPage('settings')">设置</button>
+</div>
+
+<script>
+function getStorage(key){
+  try {
+    return JSON.parse(localStorage.getItem(key)) || {};
+  } catch(e) {
+    return {};
+  }
 }
+function setStorage(key,val){
+  try {
+    localStorage.setItem(key,JSON.stringify(val));
+  } catch(e) {}
+}
+
+let nowCollectSta = "";
+let selectType = "", startPoint = "", endPoint = "";
+let currentWeatherData = null;
+
+const priceRule = [
+  {max:5, price:2},{max:10, price:3},{max:15, price:4},{max:22, price:5},
+  {max:29, price:6},{max:38, price:7},{max:47, price:8},{max:Infinity, price:10}
+];
+
+const stationDistance = {};
+const pinyinMap = {};
+const mallToStation = {};
+const scenicToStation = {};
+const allLandmarks = {...mallToStation,...scenicToStation};
 
 const lineTime = {
-  1:{start:"06:00",end:"22:00"},
-  2:{start:"06:00",end:"22:00"},
-  3:{start:"06:00",end:"22:00"},
-  4:{start:"06:00",end:"22:00"},
-  6:{start:"06:00",end:"22:00"},
-  8:{start:"06:00",end:"22:00"},
-  yunba:{start:"06:30",end:"21:30"},
-  tram:{start:"06:00",end:"22:00"}
+  1:{start:"06:00",end:"22:30"},
+  2:{start:"06:00",end:"22:30"},
+  3:{start:"06:00",end:"22:30"},
+  4:{start:"06:00",end:"22:30"},
+  6:{start:"06:00",end:"22:30"},
+  8:{start:"06:00",end:"22:05"},
+  yunba:{start:"06:00",end:"22:00"},
+  tram:{start:"06:00",end:"21:00"}
 };
 
-const transferCarGuide = {
-  "王府庄":{"car":"列车中部车厢","path":"中部下车直行直达换乘大厅，步行2分钟无绕行，换乘效率最高"},
-  "大杨":{"car":"列车尾部车厢","path":"车尾下车右转直达换乘平台，步行1分钟，少走楼梯少绕路"},
-  "八涧堡":{"car":"列车中部车厢","path":"中部下车左侧通道换乘，人流量最少，步行1分钟即可到达"},
-  "历山路":{"car":"列车前部车厢","path":"车头方向下车，直连换乘大厅，无需上下楼梯，平层直达"},
-  "老屯":{"car":"列车靠前车厢","path":"站内十字通道直达换乘区域，路线清晰，不易迷路"},
-  "姜家庄":{"car":"列车中部车厢","path":"站内水平通道直接换乘，步行距离短，全程无爬坡"},
-  "奥体中心":{"car":"列车中部车厢","path":"中部下车走双向互通换乘通道，客流分流合理，拥挤程度低"},
-  "安成街":{"car":"列车前部车厢","path":"车头侧下车走专属换乘通道，直通CBD换乘区域，减少绕行排队"},
-  "邢村":{"car":"列车尾部车厢","path":"车尾为换乘专用区域，出站直达云巴与8号线换乘广场"},
-  "彭家庄":{"car":"列车中部车厢","path":"同层无缝换乘，出站过街天桥直达云巴站台，步行距离最短"},
-  "济南西站":{"car":"1号线选车尾、4号线选前排、6号线选中部","path":"同层大型换乘大厅互通，全程无爬坡绕行；A口东广场公交集中，B口直达高铁进站口"},
-  "济南站北":{"car":"列车中部车厢","path":"中部下车直达出站口，直通火车站北广场地下通廊"},
-  "济南东站":{"car":"列车头部车厢","path":"车头下车直连高铁候车大厅"},
-  "机场南":{"car":"列车首节车头车厢","path":"车头下车最短步行直达航站楼入口"}
-};
-
-const exitBus = {
-"工研院":{"exit":"A口","bus":"K20、K22、K301、K302","mall":"无","scenic":"无"},
-"创新谷":{"exit":"B口","bus":"K141、K20","mall":"无","scenic":"无"},
-"园博园":{"exit":"C口","bus":"K20、K24、K302","mall":"无","scenic":"济南国际园博园"},
-"大学城":{"exit":"D口","bus":"K20、K22、K301","mall":"步行直达大学城商业街","scenic":"无"},
-"紫薇路":{"exit":"A口","bus":"K20、K25、K302","mall":"无","scenic":"无"},
-"赵营":{"exit":"B口","bus":"K20、K26、K302","mall":"无","scenic":"无"},
-"玉符河":{"exit":"A口","bus":"区域微循环专线","mall":"无","scenic":"玉符河景观带"},
-"王府庄":{"exit":"A口","bus":"K56、K61、K141、K157","mall":"无","scenic":"无"},
-"大杨":{"exit":"A/D口","bus":"K19、K58、K109、K141","mall":"步行直达印象济南泉世界","scenic":"无"},
-"济南西站":{"exit":"A东广场、B西广场","bus":"BRT1、BRT7、K58、K156、K167","mall":"地下通道直通西站商业广场","scenic":"兴福寺公园"},
-"方特":{"exit":"A口","bus":"K58、K141、方特专线","mall":"无","scenic":"济南方特东方神画"},
-"彭家庄":{"exit":"A口","bus":"BRT6、K11、K138、K189","mall":"无","scenic":"唐冶中央公园"},
-"鲍山":{"exit":"A口","bus":"K11、K138、K187","mall":"无","scenic":"鲍山公园"},
-"凤凰北路":{"exit":"B口","bus":"K11、K146、K187","mall":"无","scenic":"无"},
-"姜家庄":{"exit":"A口","bus":"K11、K138","mall":"无","scenic":"无"},
-"八涧堡":{"exit":"A口","bus":"BRT6、K11、K161","mall":"步行直达环联夜市商圈","scenic":"无"},
-"祝甸":{"exit":"B口","bus":"K11、K30、K80、K118","mall":"出站直达祝甸商业街","scenic":"无"},
-"七里堡":{"exit":"A口","bus":"K11、K75、K91、K107","mall":"地下通道直达七里堡综合商城","scenic":"无"},
-"历山路":{"exit":"A口","bus":"K3、K8、K45、BRT2","mall":"步行可达大润发商超","scenic":"无"},
-"北园":{"exit":"B口","bus":"K3、K36、K84、K122","mall":"北园家居建材商圈","scenic":"步行直达大明湖景区"},
-"生产路":{"exit":"A口","bus":"K3、K6、K36","mall":"无","scenic":"五龙潭公园、大明湖北区"},
-"济泺路":{"exit":"B口","bus":"K4、K5、K12、BRT1","mall":"步行至缤纷五洲、泺口商城","scenic":"无"},
-"济南站北":{"exit":"A口","bus":"K3、K9、K18、火车站专线","mall":"地下连通火车站北广场商业街","scenic":"无"},
-"益康路":{"exit":"B口","bus":"K19、K27、K42、K56","mall":"无","scenic":"无"},
-"八里桥":{"exit":"A口","bus":"K27、K42、K77、K101","mall":"紧邻八里桥果品批发市场商圈","scenic":"无"},
-"老屯":{"exit":"A口","bus":"K7、K16、K27、K77","mall":"地下直通茶叶市场商业区","scenic":"无"},
-"二环西路":{"exit":"B口","bus":"BRT7、K19、K27、K58","mall":"无","scenic":"济南森林公园"},
-"腊山":{"exit":"A口","bus":"K19、K56、K61、K81","mall":"无","scenic":"腊山森林公园"},
-"腊山南":{"exit":"B口","bus":"K19、K56、K141","mall":"无","scenic":"无"},
-"龙洞":{"exit":"A口","bus":"K139、K151、旅游专线","mall":"无","scenic":"龙洞风景区、藏龙涧"},
-"孟家庄":{"exit":"B口","bus":"K139、K151、K160","mall":"无","scenic":"龙洞风景区"},
-"龙奥大厦":{"exit":"A口","bus":"K139、K145、K161","mall":"无","scenic":"龙奥公园"},
-"奥体中心":{"exit":"A口","bus":"K139、K145、K160","mall":"地下通道直通奥体天街","scenic":"奥体山体公园"},
-"安成街":{"exit":"A口","bus":"K139、K145","mall":"步行抵达CBD商业街区","scenic":"无"},
-"丁家庄":{"exit":"B口","bus":"K37、K95、K116","mall":"紧邻保利华庭商业街","scenic":"无"},
-"花园东路":{"exit":"A口","bus":"K37、K95、K138","mall":"无","scenic":"无"},
-"张马屯":{"exit":"B口","bus":"K11、K138、K187","mall":"无","scenic":"无"},
-"王舍人":{"exit":"A口","bus":"K11、K57、BRT12","mall":"步行直达万虹广场","scenic":"无"},
-"济南东站":{"exit":"A口","bus":"BRT12、K57、K184、东站专线","mall":"地下连通东站地下商业街","scenic":"无"},
-"裴家营":{"exit":"B口","bus":"K57、K184","mall":"无","scenic":"无"},
-"滩头":{"exit":"A口","bus":"K11、K187、临港专线","mall":"无","scenic":"无"},
-"曲家庄":{"exit":"B口","bus":"区域接驳专线","mall":"无","scenic":"无"},
-"川流":{"exit":"A口","bus":"临港产业区专线","mall":"无","scenic":"无"},
-"临港北路":{"exit":"B口","bus":"315路、社区接驳车","mall":"无","scenic":"无"},
-"临空":{"exit":"A口","bus":"临空园区专线","mall":"无","scenic":"无"},
-"机场南":{"exit":"B口直达航站楼","bus":"机场大巴、K599","mall":"地下直通机场航站楼商业","scenic":"无"},
-"第一医科大学":{"exit":"AB口","bus":"K19、K58、K109","mall":"无","scenic":"无"},
-"春风悦动公园":{"exit":"A口","bus":"K19、K58","mall":"无","scenic":"春风悦动公园"},
-"济南西站西广场":{"exit":"AB口","bus":"BRT1、BRT7、K157","mall":"地下连通西站西广场商业","scenic":"兴福寺公园"},
-"腊山河公园":{"exit":"B口","bus":"K19、K56","mall":"无","scenic":"腊山河生态公园"},
-"段店":{"exit":"B口","bus":"K27、K56、K58","mall":"步行至世购广场","scenic":"花圃公园"},
-"营市街":{"exit":"AB口","bus":"K27、K42、K56、K104","mall":"营市街沿街综合商超","scenic":"无"},
-"南辛庄":{"exit":"A口","bus":"K6、K27、K33","mall":"社区沿街商业","scenic":"无"},
-"五里牌坊":{"exit":"BC口","bus":"K2、K19、K27","mall":"步行直达和谐广场","scenic":"无"},
-"八一立交桥":{"exit":"AD口","bus":"K27、K52、K56","mall":"紧邻八一银座商城","scenic":"英雄山风景区"},
-"省体育中心":{"exit":"C1/C2口","bus":"K15、K43、K75","mall":"地下通道直通银座玉函店","scenic":"省体休闲广场"},
-"泉城公园":{"exit":"BC口","bus":"K2、K39、K54","mall":"无","scenic":"泉城公园"},
-"千佛山":{"exit":"AD口","bus":"K2、K16、K48、K51","mall":"临近银座商城","scenic":"千佛山风景区"},
-"山师东路":{"exit":"B口","bus":"K2、K16、K48、K59","mall":"直达山师东路潮流商业街","scenic":"无"},
-"山大路南口":{"exit":"AC口","bus":"K16、K48、K59","mall":"山大路数码商业圈","scenic":"无"},
-"燕山立交桥":{"exit":"BD口","bus":"BRT2、BRT3、K59","mall":"燕山银座购物中心","scenic":"燕山山体公园"},
-"浆水泉路":{"exit":"A口","bus":"K59、K96、K115","mall":"社区配套商业","scenic":"无"},
-"山东博物馆":{"exit":"BC口","bus":"BRT5、K139、K145","mall":"无","scenic":"山东博物馆、省美术馆"},
-"转山西路":{"exit":"AD口","bus":"K139、K145","mall":"地下通道直达万象城","scenic":"转山公园"},
-"奥体东路":{"exit":"B口","bus":"K139、K145","mall":"奥体片区商务商业","scenic":"无"},
-"舜泰广场":{"exit":"AC口","bus":"K139、K166","mall":"地下连通舜泰广场商业街","scenic":"凤凰湖公园"},
-"汉峪金谷":{"exit":"BD口","bus":"K139、K166","mall":"地下直通峪悦里商业街","scenic":"凤凰湖公园"},
-"林家庄":{"exit":"A口","bus":"K146、K166","mall":"无","scenic":"无"},
-"雪山路":{"exit":"B口","bus":"K146、K169","mall":"无","scenic":"无"},
-"田家庄":{"exit":"A口","bus":"K146、K169","mall":"无","scenic":"无"},
-"邢村立交桥西":{"exit":"B口","bus":"K115、K146","mall":"无","scenic":"无"},
-"邢村":{"exit":"AC口","bus":"K115、K116","mall":"步行抵达融创文旅城商业区","scenic":"融创文旅城"},
-"唐冶公园":{"exit":"A口","bus":"K115、K169","mall":"无","scenic":"唐冶中央公园"},
-"唐冶":{"exit":"BD口","bus":"BRT6、K115、K116","mall":"地下连通唐冶奥特莱斯","scenic":"无"},
-"历城二中唐冶校区":{"exit":"A口","bus":"K115、K116","mall":"社区沿街商铺","scenic":"无"},
-"梁王":{"exit":"A口","bus":"区域专线","mall":"无","scenic":"无"},
-"王舍人北":{"exit":"A口","bus":"K57、微循环","mall":"无","scenic":"无"},
-"盛福":{"exit":"B口","bus":"K37、K116","mall":"社区商业","scenic":"无"},
-"中央商务区":{"exit":"AC口","bus":"K139、K145","mall":"CBD高端商业综合体","scenic":"CBD城市公园"},
-"解放东路":{"exit":"B口","bus":"K96、K119","mall":"沿街综合商场","scenic":"无"},
-"燕翔路":{"exit":"A口","bus":"K59、K131","mall":"社区商业","scenic":"无"},
-"窑头路":{"exit":"B口","bus":"K59、K96、K115","mall":"便民商超","scenic":"无"},
-"茂岭山":{"exit":"A口","bus":"BRT5、K152","mall":"无","scenic":"茂岭山公园"},
-"华阳路":{"exit":"B口","bus":"K139、K152","mall":"无","scenic":"无"},
-"山东大学":{"exit":"AC口","bus":"K16、K48、K59","mall":"山大周边商业街","scenic":"无"},
-"孙村":{"exit":"A口","bus":"K146、K171","mall":"孙村商业街","scenic":"无"},
-"彩石":{"exit":"B口","bus":"K136、章丘专线","mall":"高校配套商圈","scenic":"无"},
-"山东财经大学章丘校区":{"exit":"A口","bus":"校园专线、接驳车","mall":"校内及校园商业街","scenic":"无"},
-"黄旗山北":{"exit":"B口","bus":"章丘微循环公交","mall":"无","scenic":"黄旗山公园"},
-"清源大街":{"exit":"A口","bus":"章丘1路、2路","mall":"章丘主城区商业街","scenic":"无"}
-};
+const transferGuide = {};
+const exitBus = {};
 
 const metroData = {
-  1:{name:"1号线",color:"#9b7cb6",stations:["工研院","创新谷","园博园","大学城","紫薇路","赵营","玉符河","王府庄","大杨","济南西站","方特"],transfer:{"王府庄":[2],"大杨":[4],"济南西站":[4,6]}},
-  2:{name:"2号线",color:"#f2c300",stations:["彭家庄","鲍山","凤凰北路","姜家庄","八涧堡","祝甸","七里堡","历山路","北园","生产路","济泺路","济南站北","益康路","八里桥","老屯","二环西路","腊山","腊山南","王府庄"],transfer:{"彭家庄":[4],"八涧堡":[3],"历山路":[4],"老屯":[6],"王府庄":[1]}},
-  3:{name:"3号线",color:"#4682b4",stations:["龙洞","孟家庄","龙奥大厦","奥体中心","安成街","丁家庄","花园东路","八涧堡","张马屯","王舍人","济南东站","裴家营","滩头","曲家庄","川流","临港北路","临空","机场南"],transfer:{"八涧堡":[2],"奥体中心":[4],"安成街":[6],"济南东站":[6]}},
-  4:{name:"4号线",color:"#3cb371",stations:["第一医科大学","春风悦动公园","济南西站西广场","大杨","腊山河公园","腊山","段店","营市街","南辛庄","五里牌坊","八一立交桥","省体育中心","泉城公园","千佛山","山师东路","山大路南口","燕山立交桥","浆水泉路","山东博物馆","转山西路","奥体中心","奥体东路","舜泰广场","汉峪金谷","林家庄","雪山路","田家庄","邢村立交桥西","邢村","唐冶公园","唐冶","历城二中唐冶校区","彭家庄"],transfer:{"济南西站西广场":[1,6],"大杨":[1],"腊山":[2],"奥体中心":[3],"邢村":[8],"彭家庄":[2]}},
-  6:{name:"6号线",color:"#5f9dea",stations:["梁王","济南东站","裴家营","王舍人北","盛福","姜家庄","安成街","中央商务区","解放东路","燕翔路","窑头路","浆水泉路","茂岭山","华阳路","山东大学"],transfer:{"济南东站":[3],"安成街":[3],"姜家庄":[2]}},
-  8:{name:"8号线",color:"#9370db",stations:["邢村","唐冶","孙村","彩石","山东财经大学章丘校区","黄旗山北","清源大街"],transfer:{"邢村":[4]}},
-  yunba:{name:"云巴环线",color:"#00bcd4",stations:["彭家庄","唐冶","历城二中唐冶校区","唐冶公园","邢村","春博路","山东职业学院","彩虹湖","历城文博中心","唐宣路"],transfer:{"彭家庄":[2,4],"唐冶":[4],"邢村":[4,8]}},
-  tram:{name:"有轨电车",color:"#ff7800",stations:["济南东站","黄河大桥南","崔寨","黄河会展中心","新元学校","济阳政务中心","济阳北"],transfer:{"济南东站":[3,6]}}
+  1:{
+    name:"1号线",
+    color:"#9b7cb6",
+    status:"运营中",
+    stations:["工研院站","创新谷站","园博园站","大学城站","紫薇路站","赵营站","玉符河站","王府庄站","大杨站","济南西站","方特站"],
+    transfer:{"王府庄站":[2],"大杨站":[4],"济南西站":[4,6]}
+  },
+  2:{
+    name:"2号线",
+    color:"#f2c300",
+    status:"运营中",
+    stations:["王府庄站","腊山南站","腊山站","二环西路站","老屯站","八里桥站","益康路站","济南站北站","济泺路站","生产路站","北园站","历山路站","七里堡站","祝甸站","八涧堡站","姜家庄站","凤凰北路站","鲍山站","彭家庄站"],
+    transfer:{"王府庄站":[1],"腊山站":[4],"历山路站":[4],"北园站":[6],"八涧堡站":[3],"姜家庄站":[6],"凤凰北路站":[6],"彭家庄站":[4,"yunba"]}
+  },
+  3:{
+    name:"3号线",
+    color:"#4682b4",
+    status:"运营中",
+    stations:["龙洞站","孟家庄站","龙奥大厦站","奥体中心站","安成街站","丁家庄站","花园东路站","八涧堡站","张马屯站","王舍人站","济南东站","裴家营站","滩头站","川流站","临港北路站","临空站","遥墙机场站"],
+    transfer:{"八涧堡站":[2],"奥体中心站":[4],"安成街站":[6],"济南东站":[6,"tram"]}
+  },
+  4:{
+    name:"4号线",
+    color:"#3cb371",
+    status:"全线运营",
+    stations:["第一医科大学站","位里庄站","济南西站西广场站","济南西站","大杨站","腊山河站","腊山站","段店站","营市街站","南辛庄站","纬十二路站","五里牌坊站","八一立交桥站","省体育中心站","泉城公园站","千佛山站","山师东路站","山大路南口站","洪山路站","浆水泉路站","燕山立交桥站","山东博物馆站","转山西路站","奥体中心站","奥体东路站","舜泰广场站","汉峪金谷站","林家庄站","雪山路站","文旅城站","邢村立交桥西站","邢村立交桥东站","唐冶站","彭家庄站"],
+    transfer:{"位里庄站":[6],"济南西站":[1,6],"大杨站":[1],"腊山站":[2],"奥体中心站":[3],"邢村立交桥东站":[8],"彭家庄站":[2]}
+  },
+  6:{
+    name:"6号线",
+    color:"#5f9dea",
+    status:"东段运营",
+    stations:["山东大学站","茂岭山路站","礼耕路站","安成街站","软件园站","凤凰路站","王舍人北站","济南东站","梁王站","梁王东站"],
+    transfer:{"安成街站":[3],"凤凰路站":[2],"济南东站":[3,"tram"]}
+  },
+  8:{
+    name:"8号线",
+    color:"#9370db",
+    status:"运营中",
+    stations:["邢村立交桥东站","彩石站","山东职业学院站","章锦站","保税区站","山东大学龙山校区站","绣源河站","世纪大道站","清照大街站","清源大街站"],
+    transfer:{"邢村立交桥东站":[4],"山东职业学院站":["yunba"]}
+  },
+  yunba:{
+    name:"云巴环线",
+    color:"#00bcd4",
+    status:"运营中",
+    stations:["彭家庄站","程家庄站","唐冶站","历城二中站","围子山路站","春秀路站","烯谷中心站","科航路站","春暄路站","春意路站","彩虹湖公园站","春晖小学站","春博路站","生命科学城站","庄科站","庄科小学站","山东职业学院站","山东英才学院站","科创路站","春园路站"],
+    transfer:{"彭家庄站":[2,4],"山东职业学院站":[8]}
+  },
+  tram:{
+    name:"有轨电车1号线",
+    color:"#ff7800",
+    status:"运营中",
+    stations:["济南东站","郭店站","临港站","黄河大桥南站","崔寨站","青宁站","黄河会展中心站"],
+    transfer:{"济南东站":[3,6]}
+  }
 };
 
-function getStorage(key){return JSON.parse(localStorage.getItem(key))||{};}
-function setStorage(key,val){localStorage.setItem(key,JSON.stringify(val));}
+const weatherCnMap = {
+  windDir:{"N":"北","NNE":"东北偏北","NE":"东北","ENE":"东北偏东","E":"东","ESE":"东南偏东","SE":"东南","SSE":"东南偏南","S":"南","SSW":"西南偏南","SW":"西南","WSW":"西南偏西","W":"西","WNW":"西北偏西","NW":"西北","NNW":"西北偏北"},
+  weatherDesc:{"Sunny":"晴","Clear":"晴","Partly Cloudy":"多云","Cloudy":"阴","Overcast":"阴","Light Rain":"小雨","Moderate Rain":"中雨","Heavy Rain":"大雨","Thunderstorm":"雷阵雨","Light Snow":"小雪","Moderate Snow":"中雪","Heavy Snow":"大雪","Fog":"雾","Haze":"霾","Drizzle":"毛毛雨","Windy":"大风","Freezing Rain":"冻雨","Rain":"雨","Snow":"雪","Storm":"暴雨","Blizzard":"暴雪"},
+  weatherLevel:{"晴":0,"多云":0,"阴":0,"小雨":1,"毛毛雨":1,"中雨":2,"雷阵雨":2,"大雨":3,"暴雨":3,"小雪":1,"中雪":2,"大雪":3,"暴雪":3,"雾":2,"霾":2,"大风":2,"冻雨":3}
+};
 
+function closeTip(){document.getElementById("saveTip").style.display = "none";}
 function switchPage(id){
-  document.querySelectorAll(".page").forEach(e=>e.classList.add("hide"));
+  document.querySelectorAll(".page").forEach(p=>p.classList.add("hide"));
   document.getElementById(id).classList.remove("hide");
-  document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
-  event.target.classList.add("active");
+  closeSideMenu();
 }
-
-function longPressCollect(name){
-  nowCollectSta = name;
-  document.getElementById("collectStaName").innerText="是否收藏："+name;
-  document.getElementById("overlay").style.display="block";
-  document.getElementById("collectPopup").style.display="block";
+function openSideMenu(){
+  document.getElementById("sideMenu").classList.add("open");
+  document.getElementById("menuMask").style.display = "block";
 }
-function addCollect(){
-  let list = getStorage("collectList")||[];
-  if(!list.includes(nowCollectSta)){
-    list.push(nowCollectSta);
-    setStorage("collectList",list);
-    alert("收藏成功");loadCollectData();
-  }else alert("已收藏");
-  closeAllPopup();
+function closeSideMenu(){
+  document.getElementById("sideMenu").classList.remove("open");
+  document.getElementById("menuMask").style.display = "none";
 }
-function closeAllPopup(){
+function toggleDark(){
+  document.body.classList.toggle("dark");
+  let btn = document.querySelector(".header .func-btn");
+  btn.innerText = document.body.classList.contains("dark") ? "浅色" : "深色";
+  saveSettingAuto();
+}
+function closeAllPop(){
   document.getElementById("overlay").style.display="none";
   document.getElementById("collectPopup").style.display="none";
-  document.getElementById("feedbackBox").style.display="none";
 }
-
-function getSub(num){
-  let line = metroData[num];
-  let html = "";
-  line.stations.forEach(s=>{
-    html+=`<button class="sta-btn" onclick="showSubInfo('${num}','${s}')" ontouchstart="this.timer=setTimeout(()=>longPressCollect('${s}'),800)" ontouchend="clearTimeout(this.timer)">${s}</button>`;
-  });
-  document.getElementById("subSta").innerHTML = html;
-  document.getElementById("subInfo").classList.add("hide");
+function saveSettingAuto(){
+  let set = {};
+  set.dark = document.body.classList.contains("dark");
+  set.bigfont = document.body.classList.contains("bigfont");
+  set.autoDark = document.getElementById("autoDark").checked;
+  set.showBus = document.getElementById("showBus").checked;
+  set.autoLoadWeather = document.getElementById("autoLoadWeather").checked;
+  set.liftFirst = document.getElementById("liftFirst").checked;
+  set.voiceRead = document.getElementById("voiceRead").checked;
+  setStorage("sysSetting",set);
+  document.getElementById("saveTip").style.display="block";
+  setTimeout(closeTip,1500);
 }
-
-function showSubInfo(lineNum,staName){
-  let line = metroData[lineNum];
-  let time = lineTime[lineNum];
-  let data = exitBus[staName];
-  let html = `<h3>${staName}</h3>
-  <div class="time-box">本站首末班车时间：首班${time.start} 末班${time.end}</div>
-  <div class="bus-box">出站${data.exit} 可前往周边公交站，接驳公交线路：${data.bus}</div>
-  <div class="other-box"><h4>其他功能</h4>`;
-  if(data.mall!="无") html += `<p>商业通行：${data.mall}</p>`;
-  if(data.scenic!="无") html += `<p>周边景区：${data.scenic}</p>`;
-  if(transferCarGuide[staName]){
-    let car = transferCarGuide[staName];
-    html += `<p>换乘指引：推荐${car.car}，${car.path}</p>`;
+function loadSetting(){
+  let set = getStorage("sysSetting");
+  if(set.dark) {
+    document.body.classList.add("dark");
+    document.querySelector(".header .func-btn").innerText = "浅色";
   }
-  html += `</div>`;
-  document.getElementById("subInfo").innerHTML = html;
-  document.getElementById("subInfo").classList.remove("hide");
+  if(set.bigfont) document.body.classList.add("bigfont");
+  document.getElementById("autoDark").checked = set.autoDark||false;
+  document.getElementById("showBus").checked = set.showBus||false;
+  document.getElementById("autoLoadWeather").checked = set.autoLoadWeather||false;
+  document.getElementById("liftFirst").checked = set.liftFirst||false;
+  document.getElementById("voiceRead").checked = set.voiceRead||false;
+  if(set.autoLoadWeather) getWeatherInfo("index");
 }
-
-function showStationDetail(name,line){
-  let data = exitBus[name];
-  let html = `<h3>${name}</h3>
-  <div class="time-box">本站首末班车时间：首班06:00 末班22:00</div>
-  <div class="bus-box">出站${data.exit} 可前往周边公交站，接驳公交线路：${data.bus}</div>
-  <div class="other-box"><h4>其他功能</h4>`;
-  if(data.mall!="无") html += `<p>商业通行：${data.mall}</p>`;
-  if(data.scenic!="无") html += `<p>周边景区：${data.scenic}</p>`;
-  if(transferCarGuide[name]){
-    let car = transferCarGuide[name];
-    html += `<p>换乘指引：推荐${car.car}，${car.path}</p>`;
-  }
-  html += `</div>`;
-  document.getElementById("staDetail").innerHTML = html;
-  document.getElementById("staDetail").classList.remove("hide");
-}
-
-function searchSta(key){
-  let allSta = [];
-  for(let l in metroData){
-    metroData[l].stations.forEach(s=>allSta.push({name:s,line:metroData[l].name}));
-  }
-  let res = allSta.filter(item=>item.name.includes(key));
-  let html = "";
-  res.forEach(item=>html += `<button class="sta-btn" onclick="showStationDetail('${item.name}','${item.line}')" ontouchstart="this.timer=setTimeout(()=>longPressCollect('${item.name}'),800)" ontouchend="clearTimeout(this.timer)">${item.name}【${item.line}】</button>`);
-  document.getElementById("searchRes").innerHTML = html;
-  document.getElementById("staDetail").classList.add("hide");
-}
-
-function openSelect(type){
-  selectType = type;
-  let html = "";
-  for(let i in metroData){
-    html+=`<div class="line-title">${metroData[i].name}</div>`;
-    metroData[i].stations.forEach(s=>html+=`<button class="sta-btn" onclick="chooseSta('${s}')">${s}</button>`);
-  }
-  document.getElementById("allLineList").innerHTML = html;
-  document.getElementById("selectBox").classList.remove("hide");
-}
-function chooseSta(name){
-  if(selectType=="start") startPoint = name;
-  else endPoint = name;
-  document.getElementById(selectType=="start"?"startShow":"endShow").innerText = name;
-  closeSelect();
-}
-function closeSelect(){document.getElementById("selectBox").classList.add("hide");}
-function clearRoute(){
-  startPoint=endPoint="";
-  document.getElementById("startShow").innerText="未选择";
-  document.getElementById("endShow").innerText="未选择";
-  document.getElementById("routeResult").classList.add("hide");
-}
-function calculatePrice(stationNum,isTransfer){
-  let total = priceRule.base;
-  let extra = Math.floor((stationNum - 1) / priceRule.rangeNum) * priceRule.rangePrice;
-  total += extra;
-  if(isTransfer) total += priceRule.transferAdd;
-  return total;
-}
-function getLineByStation(name){
-  for(let i in metroData){
-    if(metroData[i].stations.includes(name))return i;
-  }
-  return null;
-}
-function calculateRoute(){
-  if(!startPoint||!endPoint){alert("请选择起点终点");return;}
-  let startLine = getLineByStation(startPoint);
-  let endLine = getLineByStation(endPoint);
-  let routeHtml = "<h3>✅ 详细乘车方案</h3>";
-  let stationCount = 0;let hasTransfer = false;
-  if(startLine == endLine){
-    let arr = metroData[startLine].stations;
-    let sIdx = arr.indexOf(startPoint);
-    let eIdx = arr.indexOf(endPoint);
-    stationCount = Math.abs(eIdx - sIdx);
-    routeHtml += `<div class="step">1. 在【${startPoint}】进站，乘坐${metroData[startLine].name}</div>`;
-    routeHtml += `<div class="step">2. 同向乘车，途经${stationCount}站，直达【${endPoint}】下车</div>`;
-    routeHtml += `<div class="step">3. 出站指引：${exitBus[endPoint].exit}</div>`;
-  }else{
-    hasTransfer = true;let changeStation = "";
-    for(let s in metroData[startLine].transfer){
-      if(metroData[startLine].transfer[s].includes(endLine)){changeStation = s;break;}
-    }
-    let arr1 = metroData[startLine].stations;
-    let idx1 = Math.abs(arr1.indexOf(startPoint) - arr1.indexOf(changeStation));
-    let arr2 = metroData[endLine].stations;
-    let idx2 = Math.abs(arr2.indexOf(changeStation) - arr2.indexOf(endPoint));
-    stationCount = idx1 + idx2;
-    routeHtml += `<div class="step">1. 从【${startPoint}】进站，乘坐${metroData[startLine].name}</div>`;
-    routeHtml += `<div class="step">2. 乘车途经${idx1}站，至【${changeStation}】下车换乘</div>`;
-    if(transferCarGuide[changeStation]) routeHtml += `<div class="hub-guide">🔁换乘通道：${transferCarGuide[changeStation].path}</div>`;
-    routeHtml += `<div class="step">3. 站内换乘${metroData[endLine].name}，继续乘车</div>`;
-    routeHtml += `<div class="step">4. 途经${idx2}站，到达【${endPoint}】下车</div>`;
-    routeHtml += `<div class="step">5. 最优出站口：${exitBus[endPoint].exit}</div>`;
-  }
-  let price = calculatePrice(stationCount,hasTransfer);
-  routeHtml += `<p class="price-text">乘车总价：${price} 元</p>`;
-  document.getElementById("routeResult").innerHTML = routeHtml;
-  document.getElementById("routeResult").classList.remove("hide");
-  let record = getStorage("recordList")||[];
-  record.push(startPoint+"→"+endPoint);
-  setStorage("recordList",record);
-  loadRecordData();
-}
-
 function loadCollectData(){
   let list = getStorage("collectList")||[];
   let html = list.length<=0?"暂无收藏":"";
-  list.forEach(item=>html+=`<button class="sta-btn" onclick="showStationDetail('${item}','')">${item}</button>`);
+  list.forEach(item=>html+=`<button class="sta-btn" onclick="showCollectStaInfo('${item}')">${item}</button>`);
   document.getElementById("collectList").innerHTML = html;
+}
+function showCollectStaInfo(staName){
+  let lineId = getLineIdBySta(staName);
+  showStaInfo(lineId, staName);
+  switchPage("line");
 }
 function loadRecordData(){
   let list = getStorage("recordList")||[];
@@ -929,128 +930,317 @@ function loadRecordData(){
   list.forEach(item=>html+=`<div class="notice-item">${item}</div>`);
   document.getElementById("recordList").innerHTML = html;
 }
-
-function loadSettings(){
-  let set = getStorage("sysSetting");
-  if(!set)return;
-  document.getElementById("autoDark").checked = set.autoDark||false;
-  document.getElementById("showBus").checked = set.showBus||true;
-  document.getElementById("showStationNum").checked = set.showStationNum||true;
-  document.getElementById("autoLoadWeather").checked = set.autoLoadWeather||true;
-  document.getElementById("soundTip").checked = set.soundTip||false;
-  document.getElementById("autoCopyRoute").checked = set.autoCopyRoute||false;
-  document.getElementById("offlineMode").checked = set.offlineMode||true;
-  document.getElementById("colorBlindMode").checked = set.colorBlindMode||false;
-  document.getElementById("simpleView").checked = set.simpleView||false;
-  document.getElementById("avoidStation").checked = set.avoidStation||false;
-  document.getElementById("liftFirst").checked = set.liftFirst||false;
-  document.getElementById("showBarrier").checked = set.showBarrier||true;
-  document.getElementById("showToilet").checked = set.showToilet||true;
-  document.getElementById("showShop").checked = set.showShop||false;
-  document.getElementById("showCrowd").checked = set.showCrowd||false;
-  document.getElementById("voiceRead").checked = set.voiceRead||false;
-  document.getElementById("noticePush").checked = set.noticePush||false;
-  document.getElementById("tripAlarm").checked = set.tripAlarm||false;
-  document.getElementById("homeAddr").value = set.homeAddr||"";
-  document.getElementById("schoolAddr").value = set.schoolAddr||"";
-  document.getElementById("stationAddr").value = set.stationAddr||"";
-  if(set.darkMode)document.body.classList.add("dark");
+function setFontSmall(){document.body.classList.remove("bigfont");saveSettingAuto();}
+function setFontNormal(){document.body.classList.remove("bigfont");document.body.style.fontSize = "18px";saveSettingAuto();}
+function setFontBig(){document.body.classList.add("bigfont");saveSettingAuto();}
+function clearAllCollect(){if(confirm("确定清空全部收藏？")){setStorage("collectList",[]);loadCollectData();}}
+function clearAllRecord(){if(confirm("确定清空全部查询记录？")){setStorage("recordList",[]);loadRecordData();}}
+function resetAllSys(){if(confirm("确定恢复系统默认？")){localStorage.clear();location.reload();}}
+function clearRouteData(){
+  startPoint="";endPoint="";
+  document.getElementById("startShow").innerText="未选择";
+  document.getElementById("endShow").innerText="未选择";
+  document.getElementById("routeResult").classList.add("hide");
 }
-function saveSettings(){
-  let obj = {
-    autoDark:document.getElementById("autoDark").checked,
-    showBus:document.getElementById("showBus").checked,
-    showStationNum:document.getElementById("showStationNum").checked,
-    autoLoadWeather:document.getElementById("autoLoadWeather").checked,
-    soundTip:document.getElementById("soundTip").checked,
-    autoCopyRoute:document.getElementById("autoCopyRoute").checked,
-    offlineMode:document.getElementById("offlineMode").checked,
-    colorBlindMode:document.getElementById("colorBlindMode").checked,
-    simpleView:document.getElementById("simpleView").checked,
-    avoidStation:document.getElementById("avoidStation").checked,
-    liftFirst:document.getElementById("liftFirst").checked,
-    showBarrier:document.getElementById("showBarrier").checked,
-    showToilet:document.getElementById("showToilet").checked,
-    showShop:document.getElementById("showShop").checked,
-    showCrowd:document.getElementById("showCrowd").checked,
-    voiceRead:document.getElementById("voiceRead").checked,
-    noticePush:document.getElementById("noticePush").checked,
-    tripAlarm:document.getElementById("tripAlarm").checked,
-    homeAddr:document.getElementById("homeAddr").value,
-    schoolAddr:document.getElementById("schoolAddr").value,
-    stationAddr:document.getElementById("stationAddr").value,
-    darkMode:document.body.classList.contains("dark")
-  };
-  setStorage("sysSetting",obj);
-  document.getElementById("saveTip").style.display = "block";
+function getLineData(num){
+  let line = metroData[num];
+  let html = `<h4>${line.name}（${line.status}）</h4><div class="sta-box">`;
+  line.stations.forEach(s=>html+=`<button class="sta-btn" onclick="showStaInfo('${num}','${s}')">${s}</button>`);
+  html += `</div>`;
+  document.getElementById("subSta").innerHTML = html;
+  document.getElementById("subInfo").classList.add("hide");
 }
-
-function toggleDark(){document.body.classList.toggle("dark");}
-function fontSmall(){document.body.style.fontSize="14px";}
-function fontNormal(){document.body.style.fontSize="16px";}
-function fontBig(){document.body.style.fontSize="18px";}
-function clearAllCollect(){setStorage("collectList",[]);loadCollectData();alert("已清空");}
-function clearAllRecord(){setStorage("recordList",[]);loadRecordData();alert("已清空");}
-function resetSystem(){if(confirm("确定恢复全部默认？")){localStorage.clear();location.reload();}}
-function openFeedback(){document.getElementById("overlay").style.display="block";document.getElementById("feedbackBox").style.display="block";}
-function sendMailAuto(){alert("反馈提交成功");closeAllPopup();}
-
-async function refreshWeather(){
-  let statusDom = document.getElementById("refreshStatus");
-  let dataDom = document.getElementById("weatherData");
+function showStaInfo(lineNum,staName){
+  let line = metroData[lineNum];
+  let time = lineTime[lineNum];
+  let data = exitBus[staName]||{exit:"无","bus":"无","mall":"无","scenic":"无","railway":"无","guide":"暂无详细信息"};
+  let transText = "暂无换乘线路";
+  if(metroData[lineNum].transfer[staName]){
+    let arr = metroData[lineNum].transfer[staName];
+    transText = "可换乘："+arr.map(x=>metroData[x]?.name||x).join("、");
+  }
+  let transGuide = transferGuide[staName]?`<div class="hub-guide">🚇 换乘指引：${transferGuide[staName].desc}</div>`:"";
+  let html = `<h3>${staName} (${line.name})</h3>
+  <div class="time-box">首班车${time.start} 末班车${time.end}</div>
+  <div class="bus-box">推荐出口：${data.exit} | 接驳公交：${data.bus}</div>
+  <div class="other-box">
+  <p>🚇 ${transText}</p>
+  ${data.mall!="无"?`<p class="mall-tag">周边商圈：${data.mall}</p>`:""}
+  ${data.scenic!="无"?`<p class="scenic-tag">周边景区：${data.scenic}</p>`:""}
+  ${data.railway!="无"?`<p>🚄 铁路枢纽：${data.railway}</p>`:""}
+  <p>📌 出行指引：${data.guide}</p>
+  </div>
+  ${transGuide}
+  <button class="collect-btn-inline" onclick="openCollectPop('${staName}')">⭐ 收藏本站点</button>`;
+  document.getElementById("subInfo").innerHTML = html;
+  document.getElementById("subInfo").classList.remove("hide");
+  nowCollectSta = staName;
+}
+function openCollectPop(name){
+  nowCollectSta = name;
+  document.getElementById("collectStaName").innerText = name;
+  document.getElementById("overlay").style.display = "block";
+  document.getElementById("collectPopup").style.display = "block";
+}
+function addCollect(name){
+  let list = getStorage("collectList")||[];
+  if(!list.includes(name)){
+    list.push(name);
+    setStorage("collectList",list);
+    loadCollectData();
+  }
+  closeAllPop();
+}
+function getLineIdBySta(staName){
+  for(let l in metroData){
+    if(metroData[l].stations.includes(staName)) return l;
+  }
+  return null;
+}
+function getStaAllLines(staName){
+  let lines = [];
+  for(let l in metroData){
+    if(metroData[l].stations.includes(staName)) lines.push(l);
+  }
+  return lines;
+}
+function searchStation(key){
+  key = key.toLowerCase().trim();
+  let html = "";
+  let allSta = [];
+  for(let l in metroData){
+    metroData[l].stations.forEach(s=>allSta.push({name:s,line:metroData[l].name,lineId:l}));
+  }
+  let staRes = allSta.filter(item=>item.name.toLowerCase().includes(key));
+  staRes.forEach(item=>html += `<button class="sta-btn" onclick="showSearchStaInfo('${item.name}','${item.lineId}')">${item.name}【${item.line}】</button>`);
+  for(let landmark in allLandmarks){
+    if(landmark.toLowerCase().includes(key)){
+      let staName = allLandmarks[landmark];
+      let lineId = getLineIdBySta(staName);
+      html += `<button class="sta-btn mall-tag" onclick="showSearchStaInfo('${staName}','${lineId}')">${landmark}→${staName}</button>`;
+    }
+  }
+  document.getElementById("searchRes").innerHTML = html;
+  document.getElementById("staDetail").classList.add("hide");
+}
+fu}
+function showSearchStaInfo(staName,lineId){
+  showStaInfo(lineId,staName);
+}
+function openSelectBox(type){
+  selectType = type;
+  let html = "";
+  for(let i in metroData){
+    html+=`<h4>${metroData[i].name}</h4><div class="sta-box">`;
+    metroData[i].stations.forEach(s=>html+=`<button class="sta-btn" onclick="chooseSelectStation('${s}')">${s}</button>`);
+    html += `</div>`;
+  }
+  document.getElementById("allLineList").innerHTML = html;
+  document.getElementById("selectBox").classList.remove("hide");
+}
+function chooseSelectStation(name){
+  if(selectType=="start") startPoint = name;
+  else endPoint = name;
+  document.getElementById(selectType=="start"?"startShow":"endShow").innerText = name;
+  document.getElementById("selectBox").classList.add("hide");
+  let record = getStorage("recordList")||[];
+  record.unshift(`${selectType=="start"?"起点":"终点"}选择：${name} | ${new Date().toLocaleString()}`);
+  if(record.length>50) record = record.slice(0,50);
+  setStorage("recordList",record);
+  loadRecordData();
+}
+function closeSelectBox(){
+  document.getElementById("selectBox").classList.add("hide");
+}
+function calcPrice(distance){
+  for(let item of priceRule){
+    if(distance <= item.max) return item.price;
+  }
+  return 10;
+}
+function calcStaDistance(lineId, sta1, sta2){
+  let stations = metroData[lineId].stations;
+  let idx1 = stations.indexOf(sta1);
+  let idx2 = stations.indexOf(sta2);
+  if(idx1 === -1 || idx2 === -1) return {distance:0, stationCount:0};
+  let stationCount = Math.abs(idx1 - idx2);
+  let distance = stationCount * 1.2;
+  let key1 = `${sta1}-${sta2}`;
+  let key2 = `${sta2}-${sta1}`;
+  if(stationDistance[key1]) distance = stationDistance[key1];
+  if(stationDistance[key2]) distance = stationDistance[key2];
+  return {distance, stationCount};
+}
+function findBestTransfer(startLineId, endLineId, fastMode){
+  let startTrans = metroData[startLineId].transfer;
+  if(fastMode){
+    if((startLineId=="4" && endLineId=="8") || (startLineId=="8" && endLineId=="4")) return "邢村立交桥东站";
+  }
+  for(let sta in startTrans){
+    if(startTrans[sta].includes(endLineId)) return sta;
+  }
+  if((startLineId=="1" && endLineId=="tram") || (startLineId=="tram" && endLineId=="1")){
+    return {midLine:"6", firstTrans:"济南西站", secondTrans:"济南东站"};
+  }
+  if(startTrans["王府庄站"]?.includes(2)){
+    return {midLine:"2", firstTrans:"王府庄站", secondTrans:"八涧堡站"};
+  }
+  return null;
+}
+function calculateRoute(){
+  if(!startPoint||!endPoint){alert("请先选择起点终点");return;}
+  let startLines = getStaAllLines(startPoint);
+  let endLines = getStaAllLines(endPoint);
+  if(startLines.length == 0 || endLines.length == 0){alert("站点信息错误");return;}
+  let routeHtml = "<h3>✅ 精准出行方案</h3>";
+  let totalDistance = 0, totalStationCount = 0;
+  let fastMode = document.getElementById("fastMode").checked;
+  let hasOutTransfer = false;
+  if(!currentWeatherData){
+    getWeatherInfo("index").then(()=>{calculateRoute();});
+    return;
+  }
+  let commonLine = startLines.filter(x => endLines.includes(x));
+  if(commonLine.length > 0){
+    let lineId = commonLine[0];
+    let calcRes = calcStaDistance(lineId, startPoint, endPoint);
+    totalDistance = calcRes.distance;
+    totalStationCount = calcRes.stationCount;
+    routeHtml += `<div>1. ${startPoint}进站，乘坐${metroData[lineId].name}</div>
+    <div>2. 途经${totalStationCount}站直达${endPoint}</div>`;
+  }else{
+    let startLine = startLines[0];
+    let endLine = endLines[0];
+    let changeStation = findBestTransfer(startLine, endLine, fastMode);
+    if(typeof changeStation === "string"){
+      let res1 = calcStaDistance(startLine, startPoint, changeStation);
+      let res2 = calcStaDistance(endLine, changeStation, endPoint);
+      totalDistance = res1.distance + res2.distance;
+      totalStationCount = res1.stationCount + res2.stationCount;
+      if(changeStation == "彭家庄站") hasOutTransfer = true;
+      routeHtml += `<div>1. ${startPoint}乘坐${metroData[startLine].name}</div>
+      <div>2. 乘坐${res1.stationCount}站至${changeStation}换乘</div>
+      <div>3. 换乘${metroData[endLine].name}，乘坐${res2.stationCount}站抵达${endPoint}</div>`;
+    }else if(typeof changeStation === "object"){
+      let midLine = changeStation.midLine;
+      let firstTrans = changeStation.firstTrans;
+      let secondTrans = changeStation.secondTrans;
+      let res1 = calcStaDistance(startLine, startPoint, firstTrans);
+      let res2 = calcStaDistance(midLine, firstTrans, secondTrans);
+      let res3 = calcStaDistance(endLine, secondTrans, endPoint);
+      totalDistance = res1.distance + res2.distance + res3.distance;
+      totalStationCount = res1.stationCount + res2.stationCount + res3.stationCount;
+      hasOutTransfer = true;
+      routeHtml += `<div>1. ${startPoint}乘坐${metroData[startLine].name}</div>
+      <div>2. 乘坐${res1.stationCount}站至${firstTrans}换乘</div>
+      <div>3. 换乘${metroData[midLine].name}至${secondTrans}二次换乘</div>
+      <div>4. 换乘${metroData[endLine].name}抵达${endPoint}</div>`;
+    }else{alert("暂无换乘方案");return;}
+  }
+  let weatherWarn = generateWeatherWarn(hasOutTransfer);
+  if(weatherWarn) routeHtml = weatherWarn + routeHtml;
+  let endData = exitBus[endPoint] || {exit:"无",bus:"无",mall:"无",scenic:"无",guide:"暂无详情"};
+  routeHtml += `<div class="other-box">
+    <p>🚪 出站推荐：${endData.exit}</p>
+    <p>🚌 接驳公交：${endData.bus}</p>
+    <p>📌 步行指引：${endData.guide}</p>
+    ${endData.mall !== "无"?`<p class="mall-tag">🛍️ 附近商圈：${endData.mall}</p>`:""}
+    ${endData.scenic !== "无"?`<p class="scenic-tag">🌿 附近景区：${endData.scenic}</p>`:""}
+  </div>`;
+  let price = calcPrice(totalDistance);
+  routeHtml += `<p style="margin-top:10px;font-weight:bold;">全程${totalStationCount}站 | 里程${totalDistance.toFixed(1)}公里 | 票价：${price} 元</p>`;
+  let nowHour = new Date().getHours();
+  let endEndHour = parseInt(lineTime[endLines[0]].end.split(":")[0]);
+  if(nowHour >= endEndHour) routeHtml += `<p style="color:#e64340;margin-top:10px;">⚠️ 已临近停运时间，谨慎出行</p>`;
+  document.getElementById("routeResult").innerHTML = routeHtml;
+  document.getElementById("routeResult").classList.remove("hide");
+  let record = getStorage("recordList")||[];
+  record.unshift(`路线规划：${startPoint} → ${endPoint} | ${new Date().toLocaleString()}`);
+  if(record.length>50) record = record.slice(0,50);
+  setStorage("recordList",record);
+  loadRecordData();
+}
+function generateWeatherWarn(hasOutTransfer = false){
+  if(!currentWeatherData) return "";
+  let warnHtml = "";
+  let {weather, temp, precip, windSpeed, visibility, level} = currentWeatherData;
+  if(level >= 3) warnHtml += `<div class="weather-warn-box">⚠️ 红色预警：${weather}天气，谨慎出行</div>`;
+  else if(level >= 2) warnHtml += `<div class="weather-warn-box orange">⚠️ 天气提醒：${weather}，出行注意安全</div>`;
+  else if(level >= 1) warnHtml += `<div class="weather-warn-box yellow">🌂 温馨提示：${weather}，请提前备好雨具</div>`;
+  if(temp >= 35) warnHtml += `<div class="weather-warn-box orange">🥵 高温提醒，注意防暑补水</div>`;
+  if(temp <= 0) warnHtml += `<div class="weather-warn-box orange">🥶 低温天气，注意路面防滑</div>`;
+  if(hasOutTransfer && level >= 1){
+    if(precip > 0) warnHtml += `<div class="hub-guide">🌂 含地面出站换乘，雨天注意路面湿滑</div>`;
+    if(windSpeed >= 30) warnHtml += `<div class="hub-guide">💨 风力较大，地面换乘注意防风</div>`;
+    if(visibility <= 1) warnHtml += `<div class="hub-guide">🌫️ 能见度较低，地面换乘减速慢行</div>`;
+  }
+  return warnHtml;
+}
+async function getWeatherInfo(type="page"){
+  let statusDom = type=="index"?document.getElementById("indexWeatherStatus"):document.getElementById("weatherStatus");
   statusDom.style.display = "block";
-  statusDom.innerText = "正在获取最新天气...";
+  statusDom.innerText = "正在获取天气数据...";
   try{
-    let res = await fetch(API.weatherApi);
+    let res = await fetch("https://wttr.in/Jinan?format=j1&lang=zh");
     let data = await res.json();
-    let weather = data.current_condition[0];
-    let astro = data.weather[0].astronomy[0];
-    let html = `
-    <div class="weather-grid">
-      <div class="weather-card"><h4>所在地</h4><p>济南市</p></div>
-      <div class="weather-card"><h4>天气状况</h4><p>${weather.weatherDesc[0].value}</p></div>
-      <div class="weather-card"><h4>实时温度</h4><p>${weather.temp_C} ℃</p></div>
-      <div class="weather-card"><h4>体感温度</h4><p>${weather.FeelsLikeC} ℃</p></div>
-      <div class="weather-card"><h4>湿度</h4><p>${weather.humidity} %</p></div>
-      <div class="weather-card"><h4>气压</h4><p>${weather.pressure} hPa</p></div>
-      <div class="weather-card"><h4>风速</h4><p>${weather.windspeedKmph} km/h</p></div>
-      <div class="weather-card"><h4>风向</h4><p>${weather.winddir16Point}</p></div>
-    </div>
-    <div class="split-box">
-      <h3>日出日落</h3>
-      <div>日出：${astro.sunrise}</div>
-      <div>日落：${astro.sunset}</div>
-    </div>
-    `;
-    dataDom.innerHTML = html;
-    statusDom.innerText = "天气刷新完成";
+    renderWeather(data, type);
+    statusDom.innerText = "刷新完成！";
     setTimeout(()=>statusDom.style.display="none",1500);
   }catch(e){
-    dataDom.innerHTML = "<p>天气加载失败，请稍后重试</p>";
+    let contentDom = type=="index"?document.getElementById("indexWeatherContent"):document.getElementById("weatherContent");
+    contentDom.innerHTML = "<p>天气加载失败，请检查网络</p>";
     statusDom.innerText = "刷新失败";
-    setTimeout(()=>statusDom.style.display="none",1500);
   }
 }
-
-async function loadNoticeData(){
-  let html = `
-  <div class="split-box">
-    <h3 style="color:#277da1">🚇 地铁官方运营通知</h3>
-    <div class="notice-item">每日凌晨00:00至05:30全线停运检修</div>
-    <div class="notice-item">首班车06:00，末班车22:00，按最晚换乘时间乘车</div>
-    <div class="notice-item">严禁携带危险品、超大行李进站乘车</div>
-  </div>
-  `;
-  document.getElementById("noticeBox").innerHTML = html;
+function renderWeather(data, type="page"){
+  let realTime = data.current_condition[0];
+  let forecast = data.weather;
+  let weatherText = weatherCnMap.weatherDesc[realTime.weatherDesc[0].value] || realTime.weatherDesc[0].value;
+  let windDirText = weatherCnMap.windDir[realTime.winddir16Point] || realTime.winddir16Point;
+  let realTimeHtml = `
+  <h3>实时天气</h3>
+  <div class="weather-real-time">
+    <div class="weather-item"><div class="label">天气状况</div><div class="value">${weatherText}</div></div>
+    <div class="weather-item"><div class="label">实时温度</div><div class="value">${realTime.temp_C} ℃</div></div>
+    <div class="weather-item"><div class="label">体感温度</div><div class="value">${realTime.FeelsLikeC} ℃</div></div>
+    <div class="weather-item"><div class="label">相对湿度</div><div class="value">${realTime.humidity} %</div></div>
+    <div class="weather-item"><div class="label">风向</div><div class="value">${windDirText}风</div></div>
+    <div class="weather-item"><div class="label">风速</div><div class="value">${realTime.windspeedKmph} 公里/小时</div></div>
+    <div class="weather-item"><div class="label">能见度</div><div class="value">${realTime.visibility} 公里</div></div>
+    <div class="weather-item"><div class="label">气压</div><div class="value">${realTime.pressure} 百帕</div></div>
+    <div class="weather-item"><div class="label">降水量</div><div class="value">${realTime.precipMM} 毫米</div></div>
+    <div class="weather-item"><div class="label">紫外线强度</div><div class="value">${realTime.uvIndex} 级</div></div>
+  </div>`;
+  let forecastHtml = `<h3>未来3天预报</h3><div class="weather-forecast">`;
+  for(let i=0; i<3; i++){
+    let day = forecast[i];
+    let date = new Date(day.date).toLocaleDateString('zh-CN',{month:'numeric',day:'numeric',weekday:'short'});
+    let dayWeather = weatherCnMap.weatherDesc[day.hourly[0].weatherDesc[0].value] || day.hourly[0].weatherDesc[0].value;
+    forecastHtml += `
+    <div class="forecast-item">
+      <div class="forecast-date">${date}</div>
+      <div>${dayWeather}</div>
+      <div class="forecast-temp">${day.mintempC}℃ ~ ${day.maxtempC}℃</div>
+      <div>降水：${day.totalPrecipMM}毫米</div>
+    </div>`;
+  }
+  forecastHtml += `</div>`;
+  if(type == "index"){
+    document.getElementById("indexWeatherContent").innerHTML = realTimeHtml + forecastHtml;
+  }else{
+    document.getElementById("weatherContent").innerHTML = realTimeHtml + forecastHtml;
+  }
+  currentWeatherData = {
+    weather: weatherCnMap.weatherDesc[realTime.weatherDesc[0].value] || realTime.weatherDesc[0].value,
+    temp: realTime.temp_C,precip: realTime.precipMM,windSpeed: realTime.windspeedKmph,
+    visibility: realTime.visibility,level: weatherCnMap.weatherLevel[weatherCnMap.weatherDesc[realTime.weatherDesc[0].value]] || 0
+  };
 }
 
 window.onload = function(){
-  loadSettings();
+  loadSetting();
   loadCollectData();
   loadRecordData();
-  refreshWeather();
-  loadNoticeData();
-  weatherRefreshTimer = setInterval(refreshWeather,REFRESH_INTERVAL);
 }
 </script>
 </body>
