@@ -752,9 +752,7 @@ body.dark .forecast-item {
   <button onclick="switchPage('route')">规划</button>
   <button onclick="switchPage('collect')">收藏</button>
   <button onclick="switchPage('settings')">设置</button>
-</div>
-
-<script>
+</div><script>
 function getStorage(key){
   try {
     return JSON.parse(localStorage.getItem(key)) || {};
@@ -934,7 +932,7 @@ function setFontSmall(){document.body.classList.remove("bigfont");saveSettingAut
 function setFontNormal(){document.body.classList.remove("bigfont");document.body.style.fontSize = "18px";saveSettingAuto();}
 function setFontBig(){document.body.classList.add("bigfont");saveSettingAuto();}
 function clearAllCollect(){if(confirm("确定清空全部收藏？")){setStorage("collectList",[]);loadCollectData();}}
-function clearAllRecord(){if(confirm("确定清空全部查询记录？")){setStorage("recordList",[]);loadRecordData();}}
+function clearAllRecord(){if(confirm("确定清空查询记录？")){setStorage("recordList",[]);loadRecordData();}}
 function resetAllSys(){if(confirm("确定恢复系统默认？")){localStorage.clear();location.reload();}}
 function clearRouteData(){
   startPoint="";endPoint="";
@@ -953,24 +951,24 @@ function getLineData(num){
 function showStaInfo(lineNum,staName){
   let line = metroData[lineNum];
   let time = lineTime[lineNum];
-  let data = exitBus[staName]||{exit:"无","bus":"无","mall":"无","scenic":"无","railway":"无","guide":"暂无详细信息"};
+  let data = exitBus[staName]||{exit:"无",bus:"无",mall:"无",scenic:"无",railway:"无",guide:"暂无详细信息"};
   let transText = "暂无换乘线路";
   if(metroData[lineNum].transfer[staName]){
     let arr = metroData[lineNum].transfer[staName];
     transText = "可换乘："+arr.map(x=>metroData[x]?.name||x).join("、");
   }
-  let transGuide = transferGuide[staName]?`<div class="hub-guide">🚇 换乘指引：${transferGuide[staName].desc}</div>`:"";
+  let transGuideHtml = transferGuide[staName]?`<div class="hub-guide">🚇 换乘指引：${transferGuide[staName].desc}</div>`:"";
   let html = `<h3>${staName} (${line.name})</h3>
   <div class="time-box">首班车${time.start} 末班车${time.end}</div>
   <div class="bus-box">推荐出口：${data.exit} | 接驳公交：${data.bus}</div>
   <div class="other-box">
   <p>🚇 ${transText}</p>
-  ${data.mall!="无"?`<p class="mall-tag">周边商圈：${data.mall}</p>`:""}
-  ${data.scenic!="无"?`<p class="scenic-tag">周边景区：${data.scenic}</p>`:""}
+  ${data.mall!="无"?`<p class="mall-tag">🛍️ 周边商圈：${data.mall}</p>`:""}
+  ${data.scenic!="无"?`<p class="scenic-tag">🌿 周边景区：${data.scenic}</p>`:""}
   ${data.railway!="无"?`<p>🚄 铁路枢纽：${data.railway}</p>`:""}
   <p>📌 出行指引：${data.guide}</p>
   </div>
-  ${transGuide}
+  ${transGuideHtml}
   <button class="collect-btn-inline" onclick="openCollectPop('${staName}')">⭐ 收藏本站点</button>`;
   document.getElementById("subInfo").innerHTML = html;
   document.getElementById("subInfo").classList.remove("hide");
@@ -1023,7 +1021,6 @@ function searchStation(key){
   document.getElementById("searchRes").innerHTML = html;
   document.getElementById("staDetail").classList.add("hide");
 }
-fu}
 function showSearchStaInfo(staName,lineId){
   showStaInfo(lineId,staName);
 }
